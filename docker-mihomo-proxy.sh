@@ -1,6 +1,10 @@
 #!/bin/sh
 # Xiaomi router / BusyBox ash. Changes dockerd only, never /etc/profile or routes.
 set -u
+# The managed startup repair owns dockerd once installed. Never bypass procd.
+if [ -f /data/router-docker-autostart/service.sh ] && [ -x /data/router-docker-autostart/proxy.sh ]; then
+    exec /data/router-docker-autostart/proxy.sh "$@"
+fi
 INIT=/etc/init.d/mi_docker
 BIN_DIR=/mnt/docker_disk/mi_docker/docker-binaries
 DATA_ROOT=/mnt/docker_disk/mi_docker/lib/docker
