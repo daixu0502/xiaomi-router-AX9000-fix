@@ -1,0 +1,39 @@
+# Local build tools, downloads, configuration and caches
+/.tools/
+/local/
+.env
+.env.*
+**/__pycache__/
+**/.pytest_cache/
+**/.test-cache/
+*.log
+*.tmp
+*.bak
+*.key
+*.pem
+*_host_key
+authorized_keys
+known_hosts*
+
+# Keep only the reviewed current installation package in source control.
+!/dist/
+/dist/*
+!/dist/README.md
+!/dist/router-ssh-modern-2026.94-aarch64-v2.tar.gz
+!/dist/router-ssh-modern-2026.94-aarch64-v2.tar.gz.sha256
+
+# Tests remain local. Markdown documentation is allowed.
+**/tests/**
+**/__tests__/**
+!**/tests/**/
+!**/__tests__/**/
+!**/tests/**/*.md
+!**/__tests__/**/*.md
+test_*.py
+test_*.sh
+test_*.lua
+*_test.py
+*_test.sh
+*.test.*
+*.spec.*
+!*.md
