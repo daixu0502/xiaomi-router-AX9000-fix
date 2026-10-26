@@ -2,7 +2,7 @@
 
 ## 功能与适用范围
 
-目标固件：**小米 AX9000（RA70）原厂稳定版 1.0.140**，原厂 Dropbear 为 `2017.75`。该信息于 2026-10-26 从设备的 `/usr/share/xiaoqiang/xiaoqiang_version` 只读核对。其他 ROM 版本或机型未验证，实际安装仍须通过原启动脚本、配置和程序摘要检查。下文的 `2026.94` 是升级后的 Dropbear 版本，不是小米固件版本。
+目标固件：**小米 AX9000（RA70）原厂开发版 1.0.140**，原厂 Dropbear 为 `2017.75`。型号和 ROM 版本号于 2026-10-26 从设备的 `/usr/share/xiaoqiang/xiaoqiang_version` 只读核对，适用发行类型按原厂开发版标注。其他 ROM 版本或机型未验证，实际安装仍须通过原启动脚本、配置和程序摘要检查。下文的 `2026.94` 是升级后的 Dropbear 版本，不是小米固件版本。
 
 针对已核对的 AX9000 原厂 Dropbear 2017.75：该构建仅编译了 RSA 支持，无法通过配置开启其他主机密钥算法。本功能从 [Dropbear 官方 2026.94 源码](https://github.com/mkj/dropbear/releases/tag/DROPBEAR_2026.94) 构建 ARM64 musl 静态程序，安装至 `/data/router-ssh-modern/bin/dropbear`，由原厂 procd 服务管理。
 

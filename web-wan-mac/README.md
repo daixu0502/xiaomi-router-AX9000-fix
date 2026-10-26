@@ -2,7 +2,7 @@
 
 `fix-router-web-mac.sh` 修复通过端口转发或反向代理进入 WAN 设置页面时，因查不到访问者 MAC 而产生 HTTP 500 的问题。
 
-目标固件：**小米 AX9000（RA70）原厂稳定版 1.0.140**。其他版本未验证；实际执行仍须匹配已知 WAN 模板表达式。版本核对来源见[仓库固件说明](../README.md#针对的原厂固件)。
+目标固件：**小米 AX9000（RA70）原厂开发版 1.0.140**。其他版本未验证；实际执行仍须匹配已知 WAN 模板表达式。版本核对来源见[仓库固件说明](../README.md#针对的原厂固件)。
 
 目标文件为 `/usr/lib/lua/luci/view/web/setting/wan.htm`。原模板直接执行 `string.upper(luci.sys.net.ip4mac(remote_addr))`；MAC 查询返回 `nil` 时会报错。修复仅将该调用改为：
 
