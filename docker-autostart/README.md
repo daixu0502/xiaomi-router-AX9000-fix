@@ -2,6 +2,8 @@
 
 `install-router-docker-autostart.sh` 修复 AX9000 原厂 `mi_docker` 在部分重启或磁盘挂载时序下不能自动启动的问题。脚本使用 procd 托管，等待原 Docker 磁盘挂载，并保留官方安装、卸载入口。
 
+目标固件：**小米 AX9000（RA70）原厂稳定版 1.0.140**。其他版本未验证；实际执行仍须满足原厂启动结构和 Docker 路径检查。版本核对来源见[仓库固件说明](../README.md#针对的原厂固件)。
+
 ## 适用条件
 
 - 路由器已有官方 Docker，程序位于 `/mnt/docker_disk/mi_docker/docker-binaries/`。

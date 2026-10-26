@@ -1,5 +1,7 @@
 # 安装包
 
+目标设备和固件：**小米 AX9000（RA70）原厂稳定版 1.0.140**。其他版本未验证，安装器仍须核对原文件和配置摘要；详见[固件说明](../README.md#针对的原厂固件)。
+
 | 包 | 用途 | 校验 |
 | --- | --- | --- |
 | [router-ssh-modern-2026.94-aarch64-v2.tar.gz](router-ssh-modern-2026.94-aarch64-v2.tar.gz) | AX9000 ARM64 SSH 现代算法升级，含静态 Dropbear 2026.94 与安装器 | [SHA-256](router-ssh-modern-2026.94-aarch64-v2.tar.gz.sha256) |
