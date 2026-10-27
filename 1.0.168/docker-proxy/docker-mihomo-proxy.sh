@@ -7,6 +7,12 @@ VERSION_FILE=/usr/share/xiaoqiang/xiaoqiang_version
 [ ! -L "$CORE/installed" ] || fail_early '托管安装标记不能为符号链接。'
 [ "$(awk '$1=="option" && $2=="ROM" {gsub(/[\047\042]/,"",$3);print $3}' "$VERSION_FILE")" = 1.0.168 ] &&
 [ "$(awk '$1=="option" && $2=="HARDWARE" {gsub(/[\047\042]/,"",$3);print $3}' "$VERSION_FILE")" = RA70 ] || fail_early '仅适用于 RA70 原厂 1.0.168。'
+# Stock curl does not reliably discover the otherwise valid system CA bundle.
+# Preserve any explicit trust-store choice from the caller; never skip TLS checks.
+if [ -z "${CURL_CA_BUNDLE:-}" ] && [ -z "${SSL_CERT_FILE:-}" ] &&
+   [ -z "${SSL_CERT_DIR:-}" ] && [ -r /etc/ssl/certs/ca-certificates.crt ]; then
+    export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+fi
 if [ -e "$CORE/installed" ]; then
     [ ! -L "$CORE" ] && [ ! -L "$CORE/runtime" ] || fail_early '托管目录不能为符号链接。'
     case "$(cat "$CORE/installed")" in 1.1.0|1.1.1|1.1.2|1.1.3) ;; *) fail_early '请先将 Docker 自启修复升级到 1.1.3。' ;; esac
