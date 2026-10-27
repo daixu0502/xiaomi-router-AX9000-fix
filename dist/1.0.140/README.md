@@ -11,6 +11,6 @@
 
 通过 root SSH 按对应说明执行。Docker 自启要求已有原厂 Docker 和数据盘；代理切换默认会重启 Docker。不要在 1.0.168 使用本版 DHCP 脚本。
 
-共用 SSH 安装包见 [common](../common/README.md)，SSH 恢复见[完整工具目录](../../ssh-reopen/README.md)。
+共用 SSH 开启、恢复、现代算法及固化工具见 [common](../common/README.md)，统一[使用说明](../../ssh/README.md)。
 
 [仓库说明](../../README.md) · [安装包目录](../README.md)

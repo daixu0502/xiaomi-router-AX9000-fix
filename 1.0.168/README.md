@@ -20,9 +20,7 @@
 | `/16` DHCP 保存错误 | [使用与恢复](web-dhcp/README.md) | `web-dhcp/fix-router-dhcp16-web.sh` |
 | Docker 服务与原厂页面恢复 | [部署与回退](docker/README.md) | `docker/install-router-docker.sh` |
 | Docker 镜像代理 | [两种运行方式](docker-proxy/README.md) | `docker-proxy/docker-mihomo-proxy.sh` |
-| SSH 现代算法（两版共用） | [ssh-modern](../ssh-modern/README.md) | `ssh-modern/fix-router-ssh-modern.sh`（仓库根目录） |
-| WSL 从 Web 开启 SSH（漏洞待实机验证） | [ssh-open](../ssh-open/README.md) | `ssh-open/open-ssh-wsl.sh`（电脑 WSL 运行，不写 Bdata） |
-| 固化后升级/重置恢复 SSH（两版共用） | [ssh-reopen](../ssh-reopen/README.md) | `ssh-reopen/reopen-ssh-wsl.sh`（仓库根目录） |
+| SSH 综合工具（两版共用） | [使用教程与注意事项](../ssh/README.md) | `ssh/ssh.sh`；新增固化待实机验证 |
 
 MAC 与 DHCP 修复通过 SSH 在路由器上以 root 执行。`status` 只检查；`apply`（无参数时的默认动作）安装补丁；`restore` 恢复对应备份。安装和恢复不改写 DHCP/网络配置，也不重启服务。DHCP 在页面提交时保存配置，并沿用原厂 DNS 服务重启和设备重启行为。
 
@@ -38,4 +36,4 @@ Docker 部署使用独立安装目录和离线包，默认动作为 `status`；`
 - [Docker 移植可行性](docs/ax9000-1.0.168-docker-feasibility.md)
 - [自定义固件签名与刷入边界](docs/ax9000-custom-firmware-verification.md)
 
-两版共用 SSH 文档随工具保存在 [ssh-modern/docs](../ssh-modern/docs/ssh-common-compatibility.md)。
+两版共用 SSH 文档随工具保存在 [ssh/docs](../ssh/docs/ssh-common-compatibility.md)。

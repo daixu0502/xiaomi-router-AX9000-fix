@@ -55,23 +55,14 @@ OPTIONS
 elif [ "${1:-}" != package ]; then
     echo "Usage: sh $0 [build|package]" >&2; exit 2
 fi
-if [ -f "$FEATURE_DIR/fix-router-ssh-modern.sh" ]; then
-    PACKAGE=$(mktemp -d /tmp/ax9000-ssh-package-XXXXXX)
-    mkdir -p "$PACKAGE/bin"
-    cp "$CACHE/out/dropbear" "$PACKAGE/bin/dropbear"
-    chmod 0755 "$PACKAGE/bin/dropbear"
-    binary_md5=$(md5sum "$CACHE/out/dropbear" | awk '{print $1}')
-    sed "s/^BINARY_MD5=.*/BINARY_MD5=$binary_md5/" "$FEATURE_DIR/fix-router-ssh-modern.sh" > "$PACKAGE/fix-router-ssh-modern.sh"
-    cp "$CACHE/out/LICENSE.dropbear" "$PACKAGE/"
-    cp "$CACHE/out/LICENSE.musl" "$CACHE/out/LICENSE.zig" "$PACKAGE/"
-    cp "$CACHE/out/localoptions.h" "$PACKAGE/"
-    cp "$FEATURE_DIR/README.md" "$PACKAGE/README.md"
-    printf 'Dropbear %s\nSource: https://matt.ucc.asn.au/dropbear/releases/dropbear-%s.tar.bz2\nSource SHA256: %s\nCompiler: Zig 0.14.1, target aarch64-linux-musl, static\nToolchain SHA256: %s\n' "$VERSION" "$VERSION" "$SOURCE_SHA" "$ZIG_SHA" > "$PACKAGE/SOURCE.txt"
-    (cd "$PACKAGE"; sha256sum bin/dropbear > SHA256SUMS; md5sum bin/dropbear > MD5SUMS)
-    ARCHIVE_TMP=$(mktemp "$DIST/.router-ssh-modern.XXXXXX")
-    tar -czf "$ARCHIVE_TMP" -C "$PACKAGE" .
-    ARCHIVE=$DIST/router-ssh-modern-$VERSION-aarch64-v2.tar.gz
-    mv -f "$ARCHIVE_TMP" "$ARCHIVE"
-    (cd "$DIST"; sha256sum "$(basename "$ARCHIVE")" > "$(basename "$ARCHIVE").sha256")
-    echo "$ARCHIVE"
-fi
+expected=0707f2dc873a7a432eaa51b08b8e32e3109964b41dce82ce4657fb0d48ab0400
+actual=$(sha256sum "$CACHE/out/dropbear" | awk '{print $1}')
+[ "$actual" = "$expected" ] || {
+    echo '重建程序与已验收摘要不同；保留在本地缓存，须重新核对后更新版本与来源信息。' >&2
+    exit 1
+}
+cp "$CACHE/out/dropbear" "$FEATURE_DIR/bin/dropbear"
+for name in LICENSE.dropbear LICENSE.musl LICENSE.zig localoptions.h; do
+    cp "$CACHE/out/$name" "$FEATURE_DIR/licenses/$name"
+done
+exec python3 "$FEATURE_DIR/build-package.py"

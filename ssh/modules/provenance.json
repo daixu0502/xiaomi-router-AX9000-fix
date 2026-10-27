@@ -1,0 +1,10 @@
+{
+  "xmir_commit": "16a46e350e3de2cb3415ab2cb652df53783998dc",
+  "kmod_source_commit": "61a292846955faa9606218414ca05dc3e4119c4e",
+  "original_path": "kmod/xmir_patcher-4.4-arm64-preempt.ko",
+  "original_sha256": "a68353e1fa978c76f199b1f75f3be7fce63c7bac49ad4e82554a67f8687cd755",
+  "original_vermagic": "4.4.0-XMiR-Patcher+ SMP preempt mod_unload aarch64",
+  "vermagic": "4.4.60 SMP preempt mod_unload aarch64",
+  "module_sha256": "ac6f89aa6839b46b746320eaff54c0b11581f467e9cfdac9e4cb4fd195788de1",
+  "modification": "Only replace and NUL-pad vermagic in-place, following upstream install_ssh.py; no ELF offsets changed."
+}

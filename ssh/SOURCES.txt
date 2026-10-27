@@ -1,0 +1,32 @@
+AX9000 SSH toolkit 2.0.0
+
+Web/Telnet: independent Python standard-library implementation, based on the
+authenticated menu-2 protocol of XMiR-Patcher.
+https://github.com/openwrt-xiaomi/xmir-patcher
+Smartcontroller CVE-2023-26319 research: Julien R. (SoEasY), Marin Duroyon
+https://blog.thalium.re/posts/rooting-xiaomi-wifi-routers/
+
+Dropbear 2026.94: aarch64-linux-musl static multi-call build.
+Source: https://matt.ucc.asn.au/dropbear/releases/dropbear-2026.94.tar.bz2
+Source SHA256: e098034a843699200c8c977a991fff73159735bf795d5f72ef672c41a6b1ae81
+Compiler: Zig 0.14.1
+Compiler archive SHA256: 24aeeec8af16c381934a6cd7d95c807a8cb2cf7df9fa40d359aa884195c4716c
+Binary SHA256: 0707f2dc873a7a432eaa51b08b8e32e3109964b41dce82ce4657fb0d48ab0400
+Build configuration and licenses: licenses/
+The existing staged upgrade and /data/router-ssh-modern runtime paths are retained.
+
+XMiR module: GPL, copyright remittor, version 1.0.
+Pinned binary repository commit: 16a46e350e3de2cb3415ab2cb652df53783998dc
+https://github.com/openwrt-xiaomi/xmir-patcher/tree/16a46e350e3de2cb3415ab2cb652df53783998dc/kmod
+Pinned upstream source checkout: 61a292846955faa9606218414ca05dc3e4119c4e
+https://github.com/openwrt-xiaomi/kmod-xmir-patcher/tree/61a292846955faa9606218414ca05dc3e4119c4e
+Public source, kernel configuration and upstream build workflow are in vendor/.
+Linux source used by upstream: https://github.com/torvalds/linux/tree/v4.4
+OpenWrt SDK image used by upstream: ghcr.io/openwrt/sdk:aarch64_generic-24.10.4
+This package uses the pinned upstream prebuilt module, not a locally claimed
+firmware-specific module build. Only vermagic is replaced and NUL-padded in-place,
+following the pinned upstream installer. Reproduce with build-module.py.
+Input/output hashes and vermagic: modules/provenance.json
+No force-loading, kernel symbol replacement, Bdata raw flashing or bootloader writes.
+Matching vermagic does not prove ABI compatibility. No real module load was tested.
+Upstream has no module_exit; neither unloading nor reboot is automated.

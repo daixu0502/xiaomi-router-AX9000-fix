@@ -10,7 +10,7 @@
 | --- | --- |
 | [1.0.140](1.0.140/README.md) | 原厂开发版的 Docker 自启、代理、MAC 与 DHCP 单文件修复下载入口 |
 | [1.0.168](1.0.168/README.md) | 原厂稳定版的 Docker 与原厂页面恢复离线包、MAC 与 DHCP `/16` 修复入口 |
-| [common](common/README.md) | 两版共用的 WSL SSH 开启工具、SSH 现代算法安装包及 SSH 恢复工具链接 |
+| [common](common/README.md) | 两版共用的 SSH 开启、恢复、现代算法与固化完整工具包 |
 
 ## 工具链接
 
@@ -18,8 +18,7 @@
 | --- | --- | --- |
 | [1.0.168 Docker 与原厂页面](1.0.168/router-docker-1.0.168-v1.1.0.tar.gz) | [SHA-256](1.0.168/router-docker-1.0.168-v1.1.0.tar.gz.sha256) | [说明](../1.0.168/docker/README.md) |
 | [1.0.168 Docker 独立代理脚本](1.0.168/docker-mihomo-proxy-1.0.168-v1.0.0.sh) | [SHA-256](1.0.168/docker-mihomo-proxy-1.0.168-v1.0.0.sh.sha256) | [说明](../1.0.168/docker-proxy/README.md) |
-| [两版共用 SSH 现代算法](common/router-ssh-modern-2026.94-aarch64-v2.tar.gz) | [SHA-256](common/router-ssh-modern-2026.94-aarch64-v2.tar.gz.sha256) | [说明](../ssh-modern/README.md) |
-| [WSL 从 Web 开启 SSH](common/router-ssh-open-wsl-v1.0.0.tar.gz) | [SHA-256](common/router-ssh-open-wsl-v1.0.0.tar.gz.sha256) | [说明](../ssh-open/README.md) |
+| [SSH 综合工具](common/router-ssh-v2.0.0.tar.gz) | [SHA-256](common/router-ssh-v2.0.0.tar.gz.sha256) | [说明](../ssh/README.md) |
 
 ## 使用说明
 
@@ -30,7 +29,7 @@
 - 固件专用工具不能跨版本套用，共用 SSH 工具仍有启动结构与配置检查。
 - 1.0.168 Docker 包默认不启动服务，需已恢复 root SSH 和已挂载的 ext4 外接盘；Portainer 镜像需另行配置。
 - 1.0.168 工具仍待真机验收；现有离线/隔离检查不代表实际容器与浏览器回归已完成。
-- WSL Web 开启工具在电脑运行，需 Web 管理密码，漏洞可用性待实机验证；不写 Bdata、不替换 Dropbear。
+- SSH 综合工具在 WSL 提供统一入口；`open` 需 Web 管理密码，`persist harden` 会在离机备份与验证后写 Bdata 两个开关。新固化功能待实机验收。
 - 安装包不包含原厂 ROM、测试代码、设备密码、私钥或配置备份。
 
 [返回仓库说明](../README.md)

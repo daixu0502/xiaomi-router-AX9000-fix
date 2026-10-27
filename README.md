@@ -18,9 +18,7 @@
 | 1.0.168 | Docker 镜像代理 | 独立脚本；自动适配托管自启，支持原厂未托管方式与 `--no-restart` | [脚本](dist/1.0.168/docker-mihomo-proxy-1.0.168-v1.0.0.sh) · [SHA-256](dist/1.0.168/docker-mihomo-proxy-1.0.168-v1.0.0.sh.sha256) | [说明](1.0.168/docker-proxy/README.md) |
 | 1.0.168 | WAN MAC 页面修复 | 使用本版模板摘要，修复 MAC 空值报错 | [脚本](1.0.168/web-wan-mac/fix-router-web-mac.sh) | [说明](1.0.168/web-wan-mac/README.md) |
 | 1.0.168 | DHCP `/16` 修复 | 修正地址池计数和起始偏移，保留本版原厂 `/24` 处理 | [脚本](1.0.168/web-dhcp/fix-router-dhcp16-web.sh) | [说明](1.0.168/web-dhcp/README.md) |
-| 两版共用，漏洞待实机验证 | WSL 开启 SSH | 参考 XMiR 菜单 2，经 Web 认证尝试开启原厂 SSH；默认保留密码 | [工具包](dist/common/router-ssh-open-wsl-v1.0.0.tar.gz) · [源码](ssh-open/) · [SHA-256](dist/common/router-ssh-open-wsl-v1.0.0.tar.gz.sha256) | [说明](ssh-open/README.md) |
-| 两版共用 | SSH 恢复 | 已硬固化且保留 Telnet 入口时，升级/重置后重新开启 SSH | [完整工具目录](ssh-reopen/) | [说明](ssh-reopen/README.md) |
-| 两版共用 | SSH 现代算法 | 分阶段升级 Dropbear，增加 Ed25519、ECDSA、RSA-SHA2 支持 | [安装包](dist/common/router-ssh-modern-2026.94-aarch64-v2.tar.gz) · [SHA-256](dist/common/router-ssh-modern-2026.94-aarch64-v2.tar.gz.sha256) | [说明](ssh-modern/README.md) |
+| 两版共用 | SSH 综合工具 | Web 开启、Telnet 恢复、现代算法升级与备份后 Bdata 固化 | [完整包](dist/common/router-ssh-v2.0.0.tar.gz) · [源码](ssh/) · [SHA-256](dist/common/router-ssh-v2.0.0.tar.gz.sha256) | [说明](ssh/README.md) |
 
 版本入口：[1.0.140](1.0.140/README.md) · [1.0.168](1.0.168/README.md) · [安装包目录](dist/README.md)。
 
@@ -52,9 +50,9 @@ sh install-router-docker.sh start
 
 `apply` 默认只准备程序与页面。随后可使用原厂后台开关或 `start` 启动，`stop` 停止，`restore` 回退服务与页面。1.0.140 的 Docker 自启工具要求原厂 Docker 已经安装，不是完整安装器。
 
-从 Web 后台开启 SSH，在电脑 WSL/Linux 的仓库根目录运行 `bash ssh-open/open-ssh-wsl.sh 192.168.31.1 --check` 做只读检查，去掉 `--check` 后按提示输入 Web 密码尝试开启。它不需要已有 Telnet，不执行 Bdata 固化；真实固件漏洞可用性仍待验证。
+SSH 统一使用 [ssh/ssh.sh](ssh/ssh.sh)。在 WSL 进入 `ssh/`，执行 `sh ssh.sh open 192.168.31.1 --check` 只读检查，去掉 `--check` 尝试 Web 开启；`recover` 使用已有 Telnet 入口恢复 SSH。
 
-已有硬固化 Telnet 入口的 SSH 恢复运行 `bash ssh-reopen/reopen-ssh-wsl.sh 192.168.31.1`，地址按实际情况修改。SSH 现代算法升级按[分阶段安装说明](ssh-modern/README.md#安装包与分阶段安装)执行 `prepare → candidate-ok → activate → confirm`；保留原连接，完成新连接验证后再确认。
+已有 SSH 后，执行 `sh ssh.sh persist 192.168.31.1 install` 安装开机修复；`harden` 先保存离机 Bdata 备份并校验，再写 SSH/Telnet 开关及核对写后 Flash。现代算法保留 `prepare → candidate-ok → activate → confirm` 分阶段验证，详见统一使用说明。
 
 ## 注意事项
 
@@ -64,5 +62,5 @@ sh install-router-docker.sh start
 - 安装 MAC/DHCP 补丁不改写现有网络设置；随后在原厂页面保存 DHCP 设置仍会执行原厂服务重启或设备重启流程。安装不能自动恢复此前写错的地址池。
 - Docker 启停、代理切换和回退可能中断容器。1.0.168 页面中的 Portainer 为可选组件，需另行配置已核对的 ARM64 镜像摘要，不默认安装 `latest`。
 - SSH 恢复依赖升级/重置后仍存在的硬固化 Telnet 入口；工具不能创建不存在的入口。SSH 升级保留端口和认证策略，需核对主机指纹，并保留路由器上的备份和密钥目录。
-- WSL Web 开启工具只核对两版原厂组件，不能保证接口仍有漏洞；默认保留 root 密码，可用 `--set-password` 显式改密。不会写 Bdata 或替换 Dropbear，开启结果不等于跨 OTA 固化。
+- SSH 的 `open` 命令默认保留密码，不写 Bdata；`persist harden` 才在离机备份和校验后固化两个开关。新模块与 Bdata 流程待实机验收，不保证跨 OTA/重置自动 SSH；详见统一说明。
 - OTA、重置、再次刷机可能覆盖部署内容；操作前保存重要数据及独立 SSH 恢复材料，完成后先检查状态再决定是否重新安装。

@@ -1,25 +1,28 @@
-# 两版共用 SSH 安装包
+# AX9000 SSH 综合工具下载
 
-适用于 AX9000 / RA70 原厂开发版 1.0.140 与稳定版 1.0.168。现代算法升级检查已核对的 22/3964 配置；Web 开启工具检查原厂启动脚本与程序，保留现有端口，漏洞可用性待实机验证。
+## 仓库说明
 
-| 工具 | 下载 | 使用说明 |
-| --- | --- | --- |
-| SSH 现代算法升级 | [安装包](router-ssh-modern-2026.94-aarch64-v2.tar.gz) · [SHA-256](router-ssh-modern-2026.94-aarch64-v2.tar.gz.sha256) | [分阶段安装](../../ssh-modern/README.md) |
-| WSL 从 Web 开启 SSH | [工具包](router-ssh-open-wsl-v1.0.0.tar.gz) · [SHA-256](router-ssh-open-wsl-v1.0.0.tar.gz.sha256) | [使用说明](../../ssh-open/README.md) |
-| 固化后 SSH 恢复 | [完整工具目录](../../ssh-reopen/) | [WSL 使用说明](../../ssh-reopen/README.md) |
+原 Web 开启、Telnet 恢复和现代算法工具已合并，并增加开机修复及备份后 Bdata 固化。适用于 RA70 原厂 1.0.140 / 1.0.168；新增固化待实机验证。
 
-SSH 现代算法安装包包含静态 Dropbear 2026.94、修复脚本、程序摘要、来源和许可证。首次安装需要完整包，不能只复制 `.sh`。
+[完整工具包](router-ssh-v2.0.0.tar.gz) · [SHA-256](router-ssh-v2.0.0.tar.gz.sha256) · [统一使用说明](../../ssh/README.md) · [仓库首页](../../README.md)
+
+## 使用教程
+
+在 WSL/Linux 校验并解包：
 
 ```sh
-sha256sum -c router-ssh-modern-2026.94-aarch64-v2.tar.gz.sha256
-tar -xzf router-ssh-modern-2026.94-aarch64-v2.tar.gz
+sha256sum -c router-ssh-v2.0.0.tar.gz.sha256
+tar -xzf router-ssh-v2.0.0.tar.gz
+cd router-ssh
 sha256sum -c SHA256SUMS
+sh ssh.sh --help
 ```
 
-在路由器 root SSH 会话按工具说明执行 `prepare → candidate-ok → activate → confirm`。保留原连接并核对新密钥指纹，未确认时自动回退。安装包不含设备密码、私钥、配置备份或授权公钥。
+`open` 从认证后的 Web 接口开启；`recover` 使用已有 Telnet；已有 SSH 后可用 `persist` 固化、`modern` 分阶段升级算法。完整参数和备份步骤见统一说明。
 
-1.0.140 已有真实 SSH 登录验证；1.0.168 的共用依据为相同组件及隔离测试，尚待实机验证。恢复工具依赖已硬固化且仍可访问的 Telnet 入口。
+## 注意事项
 
-WSL Web 开启工具单独解包，在电脑上运行 `bash open-ssh-wsl.sh 路由器地址 --check` 做只读检查；去掉 `--check` 后尝试认证接口。不依赖 Telnet，不进行硬固化，不能保证真实固件仍有漏洞。该工具包只含 Python/Shell 与文档，不含 Dropbear 程序。
-
-[仓库说明](../../README.md) · [安装包目录](../README.md)
+- 固化前必须保留离机 Bdata 备份；包内不含设备密码、私钥、公钥配置或分区备份。
+- 内核模块和 Bdata 写入未实机验收；不强制加载，不自动重启，不承诺跨 OTA/重置自动 SSH。
+- 软件固化和现代算法保留现有 SSH 配置，遇到未知文件摘要或正在等待确认的切换会停止。
+- 已清理旧 SSH 分发包，当前使用统一包；已部署的 `/data/router-ssh-modern/` 运行路径继续保留。

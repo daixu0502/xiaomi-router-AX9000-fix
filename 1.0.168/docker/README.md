@@ -10,7 +10,7 @@
 
 **1.0.168 原厂本身支持 ext4**：实际内核配置为 `CONFIG_EXT4_FS=y`、`CONFIG_JBD2=y`、`CONFIG_FS_MBCACHE=y`；原厂 `40-mount` 热插拔脚本保留识别文件系统并挂载到 `/extdisks/设备名` 的流程，默认 `anon_mount=1`。缺失的是 Docker 服务与页面，不是 ext4 驱动。此工具复用原厂挂载，只接受已成功挂载的 ext4 分区，不自动格式化，也不把“尚未挂载”当作“不支持 ext4”。
 
-1. 刷入原版 1.0.168，恢复 root SSH。SSH 工具的前提见[共用说明](../../ssh-modern/README.md)。脚本本身不能恢复 SSH。
+1. 刷入原版 1.0.168，恢复 root SSH。SSH 工具的前提见[统一说明](../../ssh/README.md)。脚本本身不能恢复 SSH。
 2. 连接已格式化为 ext4 的 USB 盘，用 `cat /proc/mounts` 确定实际挂载点，例如 `/extdisks/sda1`。必须为可读写、允许执行的真实挂载点；也支持已有 `/mnt/docker_disk`。脚本不分区、不格式化、不挑选第一块盘，后续按 UUID 查找同一分区。新装至少需 256 MiB 可用空间，镜像/容器另需空间。
 3. 将 [1.0.168 离线安装包](../../dist/1.0.168/router-docker-1.0.168-v1.1.0.tar.gz) 上传并解包到 USB 盘；包内含已核对的原厂 Docker 下载包，不占用路由器内置存储保存大包。
 
