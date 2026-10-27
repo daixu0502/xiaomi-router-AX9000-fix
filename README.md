@@ -14,7 +14,8 @@
 | 1.0.140 | Docker 镜像代理 | 开关 dockerd 的 HTTP 代理，支持仅保存配置 | [脚本](1.0.140/docker-proxy/docker-mihomo-proxy.sh) | [说明](1.0.140/docker-proxy/README.md) |
 | 1.0.140 | WAN MAC 页面修复 | 修复查询不到访问者 MAC 时的 WAN 页面 HTTP 500 | [脚本](1.0.140/web-wan-mac/fix-router-web-mac.sh) | [说明](1.0.140/web-wan-mac/README.md) |
 | 1.0.140 | DHCP 页面修复 | 修正保存参数错配，支持 `/24`、`/16` 地址池 | [脚本](1.0.140/web-dhcp/fix-router-dhcp-web.sh) | [说明](1.0.140/web-dhcp/README.md) |
-| 1.0.168 | Docker 与原厂页面恢复 | 刷原版后通过 root SSH 补齐 Docker 服务和“高级设置 → DOCKER” | [离线安装包](dist/1.0.168/router-docker-1.0.168-v1.0.0.tar.gz) · [源码](1.0.168/docker/) · [SHA-256](dist/1.0.168/router-docker-1.0.168-v1.0.0.tar.gz.sha256) | [说明](1.0.168/docker/README.md) |
+| 1.0.168 | Docker 与原厂页面恢复 | 补齐原厂页面、开机自启与 API 就绪检查，支持保留配置升级 | [离线安装包](dist/1.0.168/router-docker-1.0.168-v1.1.0.tar.gz) · [源码](1.0.168/docker/) · [SHA-256](dist/1.0.168/router-docker-1.0.168-v1.1.0.tar.gz.sha256) | [说明](1.0.168/docker/README.md) |
+| 1.0.168 | Docker 镜像代理 | 独立脚本；自动适配托管自启，支持原厂未托管方式与 `--no-restart` | [脚本](dist/1.0.168/docker-mihomo-proxy-1.0.168-v1.0.0.sh) · [SHA-256](dist/1.0.168/docker-mihomo-proxy-1.0.168-v1.0.0.sh.sha256) | [说明](1.0.168/docker-proxy/README.md) |
 | 1.0.168 | WAN MAC 页面修复 | 使用本版模板摘要，修复 MAC 空值报错 | [脚本](1.0.168/web-wan-mac/fix-router-web-mac.sh) | [说明](1.0.168/web-wan-mac/README.md) |
 | 1.0.168 | DHCP `/16` 修复 | 修正地址池计数和起始偏移，保留本版原厂 `/24` 处理 | [脚本](1.0.168/web-dhcp/fix-router-dhcp16-web.sh) | [说明](1.0.168/web-dhcp/README.md) |
 | 两版共用 | SSH 恢复 | 已硬固化且保留 Telnet 入口时，升级/重置后重新开启 SSH | [完整工具目录](ssh-reopen/) | [说明](ssh-reopen/README.md) |
@@ -27,7 +28,7 @@
 先确认设备为 RA70，并从原厂固件版本选择对应工具。单文件修复上传对应 `.sh`；Docker 和 SSH 现代算法须上传并解压完整安装包。下载包后，在包所在目录校验同名 `.sha256`：
 
 ```sh
-sha256sum -c router-docker-1.0.168-v1.0.0.tar.gz.sha256
+sha256sum -c router-docker-1.0.168-v1.1.0.tar.gz.sha256
 ```
 
 MAC / DHCP 修复通过路由器 root SSH 执行。以下以已上传的仓库目录和 1.0.168 为例：
@@ -42,7 +43,7 @@ sh 1.0.168/web-dhcp/fix-router-dhcp16-web.sh apply
 1.0.168 Docker：刷入原厂 1.0.168 并恢复 root SSH 后，将离线包上传到外接盘，在包所在目录执行。将示例 `/extdisks/sda1` 换成已确认的 ext4 实际挂载点：
 
 ```sh
-tar -xzf router-docker-1.0.168-v1.0.0.tar.gz
+tar -xzf router-docker-1.0.168-v1.1.0.tar.gz
 cd router-docker-1.0.168
 sh install-router-docker.sh apply --disk /extdisks/sda1
 sh install-router-docker.sh start

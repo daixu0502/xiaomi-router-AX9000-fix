@@ -16,7 +16,8 @@
 
 | 安装包 | 校验 | 使用说明 |
 | --- | --- | --- |
-| [1.0.168 Docker 与原厂页面](1.0.168/router-docker-1.0.168-v1.0.0.tar.gz) | [SHA-256](1.0.168/router-docker-1.0.168-v1.0.0.tar.gz.sha256) | [说明](../1.0.168/docker/README.md) |
+| [1.0.168 Docker 与原厂页面](1.0.168/router-docker-1.0.168-v1.1.0.tar.gz) | [SHA-256](1.0.168/router-docker-1.0.168-v1.1.0.tar.gz.sha256) | [说明](../1.0.168/docker/README.md) |
+| [1.0.168 Docker 独立代理脚本](1.0.168/docker-mihomo-proxy-1.0.168-v1.0.0.sh) | [SHA-256](1.0.168/docker-mihomo-proxy-1.0.168-v1.0.0.sh.sha256) | [说明](../1.0.168/docker-proxy/README.md) |
 | [两版共用 SSH 现代算法](common/router-ssh-modern-2026.94-aarch64-v2.tar.gz) | [SHA-256](common/router-ssh-modern-2026.94-aarch64-v2.tar.gz.sha256) | [说明](../ssh-modern/README.md) |
 
 ## 使用说明

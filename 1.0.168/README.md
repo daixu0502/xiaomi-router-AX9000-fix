@@ -19,6 +19,7 @@
 | WAN 页面 MAC 空值 | [使用与恢复](web-wan-mac/README.md) | `web-wan-mac/fix-router-web-mac.sh` |
 | `/16` DHCP 保存错误 | [使用与恢复](web-dhcp/README.md) | `web-dhcp/fix-router-dhcp16-web.sh` |
 | Docker 服务与原厂页面恢复 | [部署与回退](docker/README.md) | `docker/install-router-docker.sh` |
+| Docker 镜像代理 | [两种运行方式](docker-proxy/README.md) | `docker-proxy/docker-mihomo-proxy.sh` |
 | SSH 现代算法（两版共用） | [ssh-modern](../ssh-modern/README.md) | `ssh-modern/fix-router-ssh-modern.sh`（仓库根目录） |
 | 固化后升级/重置恢复 SSH（两版共用） | [ssh-reopen](../ssh-reopen/README.md) | `ssh-reopen/reopen-ssh-wsl.sh`（仓库根目录） |
 

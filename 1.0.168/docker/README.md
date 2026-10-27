@@ -2,6 +2,8 @@
 
 适用于 **AX9000 / RA70 国行原厂稳定版 1.0.168**，在刷入原版固件并恢复 root SSH 后执行。通过可写文件系统补齐服务、管理 API 和“高级设置 → DOCKER”，不用制作或刷入修改版 ROM。
 
+当前工具版本 **1.1.0**：增加开机 Docker API 就绪检查和托管代理入口；代理通过[独立脚本](../docker-proxy/README.md)配置，默认关闭。
+
 **当前为待真机验收版本**：已固定小米 Docker 程序和页面来源，并做离线安装/回退、原厂 Lua 及页面测试；尚未在 1.0.168 真机运行容器。安装默认只准备程序和页面，使用 `--start` 或网页开关才会启动 Docker。不要把离线验证理解为实机兼容保证。
 
 ## 准备与安装
@@ -10,11 +12,11 @@
 
 1. 刷入原版 1.0.168，恢复 root SSH。SSH 工具的前提见[共用说明](../../ssh-modern/README.md)。脚本本身不能恢复 SSH。
 2. 连接已格式化为 ext4 的 USB 盘，用 `cat /proc/mounts` 确定实际挂载点，例如 `/extdisks/sda1`。必须为可读写、允许执行的真实挂载点；也支持已有 `/mnt/docker_disk`。脚本不分区、不格式化、不挑选第一块盘，后续按 UUID 查找同一分区。新装至少需 256 MiB 可用空间，镜像/容器另需空间。
-3. 将 [1.0.168 离线安装包](../../dist/1.0.168/router-docker-1.0.168-v1.0.0.tar.gz) 上传并解包到 USB 盘；包内含已核对的原厂 Docker 下载包，不占用路由器内置存储保存大包。
+3. 将 [1.0.168 离线安装包](../../dist/1.0.168/router-docker-1.0.168-v1.1.0.tar.gz) 上传并解包到 USB 盘；包内含已核对的原厂 Docker 下载包，不占用路由器内置存储保存大包。
 
 ```sh
 cd /extdisks/sda1
-tar -xzf router-docker-1.0.168-v1.0.0.tar.gz
+tar -xzf router-docker-1.0.168-v1.1.0.tar.gz
 cd router-docker-1.0.168
 
 # 核对状态，不安装
@@ -30,6 +32,30 @@ sh install-router-docker.sh apply --disk /extdisks/sda1 --start
 使用源码目录时必须保留完整 `payload/` 和 `SHA256SUMS`。如果未提供同目录原厂包，脚本从小米 CDN 下载并强制校验 SHA-256；也可使用 `--archive /外接盘/docker-19.03.15-ce.tgz` 指定离线包。HTTPS 校验保持开启，不使用 `curl -k`；证书/时间异常时使用离线包。
 
 已有旧盘时，保留原 `mi_docker/` 目录。八个程序与原厂摘要一致则复用，数据仍位于该盘 `mi_docker/lib/docker/`。程序版本不同或缺损时拒绝覆盖；脚本不会自动升级/降级引擎或删除数据。刷固件前应另外保存重要容器数据。
+
+## 从工具 1.0.0 升级
+
+上传并解包 1.1.0 完整离线包，在新目录运行：
+
+```sh
+sh install-router-docker.sh upgrade
+```
+
+只接受已核对的 1.0.0 运行文件，保留 Docker 开关、磁盘 UUID、Portainer 配置、原厂备份及所有容器数据。升级前运行文件留在 `/data/router-docker-1.0.168/upgrade-1.0.0.*/`，升级失败尝试回退。升级不主动重启正在运行的 Docker；新就绪检查在下次启动生效。如需立即启用，明确执行 `stop` 再执行 `start`，容器会短暂中断。
+
+## 开机 API 就绪检查
+
+每次开机或 procd 重试先等待指定 UUID 的 ext4 磁盘，最多 300 秒；随后启动 dockerd，并独立观察本地 Unix socket 的 `docker info`。默认 API 等待 **180 秒**，从实际匹配到本次 dockerd 后开始计时，不包含磁盘等待。
+
+若超时，观察器同时核对 PID、进程启动时间和程序路径，只向本次实例发送 TERM，进程退出后由 procd 进行已有的有限重试；不使用强杀。进程退出或身份改变时，观察器自行退出；API 就绪后立即结束，不常驻轮询，不依赖外网或代理可用性。
+
+可将 `mi_docker.settings.api_ready_timeout` 配置为 30–240 秒；不配置时使用 180 秒。使用单调运行时间计时，避免 NTP 校时影响。手动/页面启动沿用同一等待设置。示例：
+
+```sh
+uci set mi_docker.settings.api_ready_timeout='180'
+uci commit mi_docker
+logread -e router-docker168
+```
 
 ## 原厂后台页面
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-# AX9000 RA70 stock 1.0.168 Docker + stock LuCI view, version 1.0.0.
+# AX9000 RA70 stock 1.0.168 Docker + stock LuCI view, version 1.1.0.
 set -eu
 HERE=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 [ -f "$HERE/payload/common.sh" ] || { echo '请保留完整安装目录（包含 payload）。' >&2; exit 1; }
@@ -16,8 +16,8 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 case "$ACTION" in
-    -h|--help|help) echo "用法：sh $0 status|apply --disk /extdisks/挂载点 [--archive Docker包] [--start]|start|stop|restore"; exit 0 ;;
-    apply|status|start|stop|restore) ;;
+    -h|--help|help) echo "用法：sh $0 status|apply --disk /extdisks/挂载点 [--archive Docker包] [--start]|upgrade|start|stop|restore"; exit 0 ;;
+    apply|upgrade|status|start|stop|restore) ;;
     *) die '未知动作。' ;;
 esac
 [ "$(id -u)" = 0 ] || die '请通过 root SSH 执行。'
@@ -29,6 +29,7 @@ done
 [ ! -L "$BASE" ] || die '状态目录不能为符号链接。'
 HEADER=/usr/lib/lua/luci/view/web/inc/header.htm
 HEADER_MD5=9678b0beb974771986b1d6df3ef7dbc8
+OLD_MANIFEST_SHA=0d3a43154695fcc1fab8b3bbc4b29a3b684f2ce0f486bf4a374d63cb8ef84fa0
 targets() {
     cat <<'TARGETS'
 mi_docker.init /etc/init.d/mi_docker 755
@@ -47,6 +48,11 @@ check_owned() {
     [ -f "$BASE/backup.sha256" ] || die '缺少备份摘要。'
     (cd "$BASE/backup" && sha256sum -c "$BASE/backup.sha256" >/dev/null) || die '原厂备份已损坏。'
     targets | while read -r source target mode; do [ ! -L "$target" ] || die "目标不能为符号链接：$target"; done
+}
+validate_payload() {
+    (cd "$HERE/payload" && sha256sum -c SHA256SUMS >/dev/null) || die '安装目录摘要校验失败。'
+    luac -p "$HERE/payload/routerdocker168.lua"
+    for file in "$HERE"/payload/*.sh "$HERE/payload/mi_docker.init"; do sh -n "$file"; done
 }
 if [ "$ACTION" = status ]; then
     if [ -f "$BASE/installed" ]; then
@@ -68,6 +74,8 @@ flock -n 8 || die '已有部署、页面操作或回退任务。'
 umask 077
 PENDING=0
 TMP=
+UPGRADE_BACKUP=
+UPGRADE_STAGE=
 rollback_files() {
     # Only paths in the fixed target list; Docker disk contents are never removed.
     targets | while read -r source target mode; do
@@ -95,6 +103,20 @@ clear_cache() {
         find /tmp/luci-modulecache -type f -exec rm -f '{}' \;
     fi
 }
+rollback_upgrade() {
+    targets | while read -r source target mode; do
+        local copy
+        copy=$(mktemp "${target}.upgrade-rollback.XXXXXX")
+        cp -p "$UPGRADE_BACKUP/files/$source" "$copy"
+        mv -f "$copy" "$target"
+    done
+    if [ -d "$UPGRADE_BACKUP/runtime" ]; then
+        [ ! -d "$BASE/runtime" ] || mv "$BASE/runtime" "$UPGRADE_BACKUP/runtime.failed"
+        mv "$UPGRADE_BACKUP/runtime" "$BASE/runtime"
+    fi
+    cp -p "$UPGRADE_BACKUP/owned.sha256" "$BASE/owned.sha256"
+    cp -p "$UPGRADE_BACKUP/installed" "$BASE/installed"
+}
 cleanup() {
     rc=$?
     [ -z "$TMP" ] || rm -f "$TMP"
@@ -102,12 +124,58 @@ cleanup() {
         rollback_files || true
         clear_cache
         echo '安装未完成，已尝试回退服务和页面；外接盘程序及数据保留。' >&2
+    elif [ "$PENDING" = 2 ]; then
+        rollback_upgrade || true
+        clear_cache
+        echo '升级未完成，已尝试恢复升级前的运行文件；原配置与外接盘数据保留。' >&2
     fi
     exit "$rc"
 }
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM HUP
+if [ "$ACTION" = upgrade ]; then
+    check_owned
+    validate_payload
+    api_timeout >/dev/null
+    load_proxy
+    if [ "$(cat "$BASE/installed")" = 1.1.0 ]; then
+        cmp -s "$BASE/runtime/SHA256SUMS" "$HERE/payload/SHA256SUMS" || die '当前 1.1.0 与此包不一致，拒绝覆盖。'
+        echo '已经是 1.1.0，无需升级。'
+        exit 0
+    fi
+    [ "$(cat "$BASE/installed")" = 1.0.0 ] && [ "$(sha "$BASE/runtime/SHA256SUMS")" = "$OLD_MANIFEST_SHA" ] || die '仅支持已核对的 1.0.0 升级到 1.1.0。'
+    [ "$(df -Pk / | awk 'END {print $4}')" -ge 2048 ] || die '系统可写层至少需要 2 MiB 可用空间。'
+    UPGRADE_BACKUP=$(mktemp -d "$BASE/upgrade-1.0.0.XXXXXX")
+    mkdir "$UPGRADE_BACKUP/files"
+    targets | while read -r source target mode; do cp -p "$target" "$UPGRADE_BACKUP/files/$source"; done
+    cp -p "$BASE/owned.sha256" "$BASE/installed" "$UPGRADE_BACKUP/"
+    UPGRADE_STAGE=$(mktemp -d "$BASE/.runtime-upgrade.XXXXXX")
+    cp "$HERE"/payload/* "$UPGRADE_STAGE/"
+    (cd "$UPGRADE_STAGE" && sha256sum -c SHA256SUMS >/dev/null)
+    PENDING=2
+    mv "$BASE/runtime" "$UPGRADE_BACKUP/runtime"
+    mv "$UPGRADE_STAGE" "$BASE/runtime"
+    UPGRADE_STAGE=
+    targets | while read -r source target mode; do
+        copy=$(mktemp "${target}.upgrade168.XXXXXX")
+        cp "$BASE/runtime/$source" "$copy"
+        chmod "$mode" "$copy"
+        mv -f "$copy" "$target"
+    done
+    TMP=$(mktemp "$BASE/.owned.XXXXXX")
+    targets | while read -r source target mode; do sha256sum "$target"; done > "$TMP"
+    mv -f "$TMP" "$BASE/owned.sha256"
+    TMP=$(mktemp "$BASE/.installed.XXXXXX")
+    echo 1.1.0 > "$TMP"
+    mv -f "$TMP" "$BASE/installed"
+    TMP=
+    PENDING=0
+    clear_cache
+    echo "已升级到 1.1.0，配置、容器数据及原厂备份保留；升级前文件在 $UPGRADE_BACKUP。"
+    echo '未主动重启 Docker；新检查在下次启动生效。需要立即生效时明确执行 stop，再执行 start。'
+    exit 0
+fi
 if [ "$ACTION" = restore ]; then
     check_owned
     /etc/init.d/mi_docker stop
@@ -131,6 +199,8 @@ DATA=$DISK/mi_docker/lib/docker
 check_tree
 if [ -f "$BASE/installed" ]; then
     check_owned
+    [ "$(cat "$BASE/installed")" = 1.1.0 ] || die '已安装旧版本，请先执行 upgrade 保留配置升级。'
+    cmp -s "$BASE/runtime/SHA256SUMS" "$HERE/payload/SHA256SUMS" || die '安装包与当前运行文件版本不一致。'
     [ "$(get disk_uuid)" = "$UUID" ] || die '已安装到其他 UUID，拒绝更换磁盘。'
     check_engine || die '已有 Docker 程序不匹配，未覆盖文件。'
     [ "$(get docker_install)" = 1 ] || set_option docker_install 1
@@ -146,9 +216,7 @@ else
     [ -L /etc/rc.d/S99mi_docker ] && [ "$(readlink /etc/rc.d/S99mi_docker)" = ../init.d/mi_docker ] || die '原厂 S99mi_docker 残留链接不匹配。'
     [ ! -e /etc/rc.d/K10mi_docker ] && [ ! -L /etc/rc.d/K10mi_docker ] || die '已有未知停止链接。'
     pidof dockerd >/dev/null 2>&1 && die '已有 dockerd 运行，拒绝接管。'
-    (cd "$HERE/payload" && sha256sum -c SHA256SUMS >/dev/null) || die '安装目录摘要校验失败。'
-    luac -p "$HERE/payload/routerdocker168.lua"
-    for file in "$HERE"/payload/*.sh "$HERE/payload/mi_docker.init"; do sh -n "$file"; done
+    validate_payload
     [ "$(df -Pk / | awk 'END {print $4}')" -ge 2048 ] || die '系统可写层至少需要 2 MiB 可用空间。'
     if [ -d "$BASE/backup" ]; then
         [ -f "$BASE/backup.sha256" ] || die '已有不完整备份，请先核对。'
@@ -167,8 +235,13 @@ else
     # An interrupted/failed attempt may have left a runtime directory; check it.
     if [ -d "$BASE/runtime" ]; then
         (cd "$BASE/runtime" && sha256sum -c SHA256SUMS >/dev/null) || die '已有运行目录已改变。'
-        cmp -s "$HERE/payload/SHA256SUMS" "$BASE/runtime/SHA256SUMS" || die '已有运行文件版本不符。'
-    else
+        if ! cmp -s "$HERE/payload/SHA256SUMS" "$BASE/runtime/SHA256SUMS"; then
+            [ "$(sha "$BASE/runtime/SHA256SUMS")" = "$OLD_MANIFEST_SHA" ] || die '已有运行文件版本不符。'
+            retired=$(mktemp -d "$BASE/restored-runtime-1.0.0.XXXXXX")
+            mv "$BASE/runtime" "$retired/runtime"
+        fi
+    fi
+    if [ ! -d "$BASE/runtime" ]; then
         mkdir "$BASE/runtime"
         cp "$HERE"/payload/* "$BASE/runtime/"
         chmod 700 "$BASE/runtime"
@@ -191,7 +264,7 @@ else
     TMP=
     /etc/init.d/mi_docker enable
     targets | while read -r source target mode; do sha256sum "$target"; done > "$BASE/owned.sha256"
-    echo 1.0.0 > "$BASE/installed"
+    echo 1.1.0 > "$BASE/installed"
     PENDING=0
     clear_cache
     echo '已恢复高级设置 → DOCKER，默认尚未启动 Docker。'

@@ -49,13 +49,10 @@ case "$ACTION" in
     on)
         [ "$(get docker_install)" = 1 ] || die '请先安装 Docker。'
         check_engine || die 'Docker 程序不匹配。'
+        ready_limit=$(api_timeout)
         set_option docker_enable 1
         /etc/init.d/mi_docker start
-        n=0
-        until timeout -t 2 "$ENGINE/docker" --host unix:///var/run/docker.sock info >/dev/null 2>&1; do
-            [ "$n" -lt 30 ] || die 'Docker API 尚未就绪，请检查 logread -e dockerd；开关状态已保留供 procd 重试。'
-            sleep 2; n=$((n+1))
-        done ;;
+        wait_api "$((ready_limit+15))" || die 'Docker API 尚未就绪，请检查 logread -e router-docker168；开关状态保留供 procd 重试。' ;;
     portainer)
         check_engine || die 'Docker 程序不匹配。'
         image=$(get portainer_image)

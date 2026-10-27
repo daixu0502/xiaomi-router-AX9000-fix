@@ -97,3 +97,59 @@ docker_cli() {
     # Always use the local Unix socket, ignoring inherited client contexts/hosts.
     "$ENGINE/docker" --host unix:///var/run/docker.sock "$@"
 }
+uptime_seconds() { awk '{printf "%d\n",$1}' /proc/uptime; }
+process_start() {
+    # comm may contain spaces or parentheses; fields after its final ')' are fixed.
+    [ -r "/proc/$1/stat" ] || return 1
+    awk '{sub(/^.*\) /,""); print $20}' "/proc/$1/stat"
+}
+same_process() {
+    [ "$(process_start "$1" 2>/dev/null)" = "$2" ] &&
+    [ "$(readlink "/proc/$1/exe" 2>/dev/null)" = "$3" ]
+}
+api_timeout() {
+    local value
+    value=$(get api_ready_timeout)
+    [ -n "$value" ] || value=180
+    case "$value" in *[!0-9]*|'') die 'api_ready_timeout 必须为 30–240 秒。' ;; esac
+    [ "${#value}" -le 3 ] && [ "$value" -ge 30 ] && [ "$value" -le 240 ] || die 'api_ready_timeout 必须为 30–240 秒。'
+    printf '%s\n' "$value"
+}
+api_ready() { timeout -t 2 "$ENGINE/docker" --host unix:///var/run/docker.sock info >/dev/null 2>&1; }
+wait_api() {
+    local end
+    end=$(($(uptime_seconds)+$1))
+    until api_ready; do
+        [ "$(uptime_seconds)" -lt "$end" ] || return 1
+        sleep 2
+    done
+}
+valid_proxy() {
+    printf '%s\n' "$1" | awk '
+      /^http:\/\/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$/ {
+        sub(/^http:\/\//, ""); split($0,p,":"); split(p[1],a,".");
+        for(i=1;i<=4;i++) if(length(a[i])>3 || a[i]>255) exit 1;
+        if(length(p[2])>5 || p[2]<1 || p[2]>65535) exit 1; valid=1
+      } END {if(!valid) exit 1}'
+}
+load_proxy() {
+    local dir=$BASE file key value seen='|' http='' https='' bypass=''
+    file=$dir/proxy.env
+    [ ! -L "$dir" ] && [ ! -L "$file" ] || die '代理配置路径不能为符号链接。'
+    [ -e "$file" ] || return 0
+    [ -f "$file" ] || die '代理配置不是普通文件。'
+    while IFS='=' read -r key value || [ -n "$key$value" ]; do
+        case "$seen" in *"|$key|"*) die '代理配置包含重复项。' ;; esac
+        seen=$seen$key'|'
+        case "$key" in
+            HTTP_PROXY) http=$value ;;
+            HTTPS_PROXY) https=$value ;;
+            NO_PROXY) bypass=$value ;;
+            *) die '代理配置包含未知项，请使用独立代理脚本重写。' ;;
+        esac
+    done < "$file"
+    [ "$seen" = '|HTTP_PROXY|HTTPS_PROXY|NO_PROXY|' ] && [ "$http" = "$https" ] || die '代理配置结构不匹配。'
+    [ -z "$http" ] || valid_proxy "$http" || die '代理地址必须为 http://IPv4:端口。'
+    [ "$bypass" = 'localhost,127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.local,.lan' ] || die 'NO_PROXY 不匹配，请使用独立代理脚本重写。'
+    export HTTP_PROXY=$http HTTPS_PROXY=$https NO_PROXY=$bypass
+}

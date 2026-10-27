@@ -21,6 +21,14 @@ mkdir -p "$DATA" /var/run/router-docker168
 export PATH=$ENGINE:/usr/sbin:/usr/bin:/sbin:/bin
 unset DOCKER_HOST DOCKER_CONTEXT DOCKER_TLS_VERIFY DOCKER_CERT_PATH
 unset HTTP_PROXY HTTPS_PROXY ALL_PROXY NO_PROXY http_proxy https_proxy all_proxy no_proxy
+load_proxy
+ready_limit=$(api_timeout)
+daemon_start=$(process_start "$$")
+(
+    # Never keep the daemon's duplicate-start lock after the daemon has exited.
+    exec 9>&-
+    exec /bin/sh "$BASE/runtime/readiness.sh" "$$" "$daemon_start" "$ENGINE/dockerd" "$ENGINE/docker" "$ready_limit"
+) </dev/null &
 # Fixed local socket. No TCP Docker API and no changes to /etc/profile.
 # Empty owned config avoids inheriting an unrelated daemon.json on upgraded disks.
 exec "$ENGINE/dockerd" --config-file "$BASE/runtime/daemon.json" \

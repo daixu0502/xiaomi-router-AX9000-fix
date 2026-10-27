@@ -41,7 +41,7 @@ local function launch(action)
         end
     end
     -- Only constants reach the shell. Stock session/stok authentication is kept.
-    local prefix = action == 'switch' and 'timeout -t 150 ' or ''
+    local prefix = action == 'switch' and 'timeout -t 280 ' or ''
     local suffix = action == 'switch' and '' or ' &'
     local result = require('luci.sys').call(prefix..'/bin/sh /data/router-docker-1.0.168/runtime/control.sh '..command..' </dev/null >/tmp/router-docker168-job.log 2>&1'..suffix)
     http.write_json({code=result == 0 and 0 or 1, msg=result == 0 and '' or '操作失败，请通过SSH查看部署日志。'})
