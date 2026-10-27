@@ -11,6 +11,7 @@ until find_disk; do
 done
 [ "$(get docker_enable)" = 1 ] && [ "$(get docker_install)" = 1 ] || exit 0
 check_tree
+sh "$BASE/runtime/disk-mount.sh"
 check_engine || die 'Docker 程序摘要不匹配。'
 pidof dockerd >/dev/null 2>&1 && die '发现现有 dockerd，拒绝运行第二个实例。'
 sh "$BASE/runtime/cgroups.sh"

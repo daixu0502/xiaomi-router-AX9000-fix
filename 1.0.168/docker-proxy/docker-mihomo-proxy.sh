@@ -9,7 +9,8 @@ VERSION_FILE=/usr/share/xiaoqiang/xiaoqiang_version
 [ "$(awk '$1=="option" && $2=="HARDWARE" {gsub(/[\047\042]/,"",$3);print $3}' "$VERSION_FILE")" = RA70 ] || fail_early '仅适用于 RA70 原厂 1.0.168。'
 if [ -e "$CORE/installed" ]; then
     [ ! -L "$CORE" ] && [ ! -L "$CORE/runtime" ] || fail_early '托管目录不能为符号链接。'
-    [ "$(cat "$CORE/installed")" = 1.1.0 ] && [ -f "$CORE/runtime/proxy.sh" ] || fail_early '请先将 Docker 自启修复升级到 1.1.0。'
+    case "$(cat "$CORE/installed")" in 1.1.0|1.1.1|1.1.2|1.1.3) ;; *) fail_early '请先将 Docker 自启修复升级到 1.1.3。' ;; esac
+    [ -f "$CORE/runtime/proxy.sh" ] || fail_early '托管代理入口缺失，请核对 Docker 核心。'
     (cd "$CORE/runtime" && sha256sum -c SHA256SUMS >/dev/null) || fail_early '托管运行文件已改变。'
     (cd / && sha256sum -c "$CORE/owned.sha256" >/dev/null) || fail_early '托管服务或页面已改变。'
     exec /bin/sh "$CORE/runtime/proxy.sh" "$@"

@@ -2,9 +2,11 @@
 
 适用于 **AX9000 / RA70 国行原厂稳定版 1.0.168**，在刷入原版固件并恢复 root SSH 后执行。通过可写文件系统补齐服务、管理 API 和“高级设置 → DOCKER”，不用制作或刷入修改版 ROM。
 
-当前工具版本 **1.1.0**：增加开机 Docker API 就绪检查和托管代理入口；代理通过[独立脚本](../docker-proxy/README.md)配置，默认关闭。
+当前工具版本 **1.1.3**：修复“高级设置”六项导航换行和 Docker 图标缺失，所有高级设置页面均使用同一行导航；内嵌原厂 1.0.140 Docker 图标，不依赖 1.0.168 缺失的图片。保留 cgroup 兼容修复、磁盘绑定挂载、开机 Docker API 就绪检查和托管代理入口；代理通过[独立脚本](../docker-proxy/README.md)配置，默认关闭。
 
-**当前为待真机验收版本**：已固定小米 Docker 程序和页面来源，并做离线安装/回退、原厂 Lua 及页面测试；尚未在 1.0.168 真机运行容器。安装默认只准备程序和页面，使用 `--start` 或网页开关才会启动 Docker。不要把离线验证理解为实机兼容保证。
+每次启动按 UUID 找到 ext4 分区后，将完整分区绑定挂载到 `/mnt/docker_disk`，供使用原厂固定路径的工具访问。当前为 `/extdisks/sda1` 时，相当于 `mount -o bind /extdisks/sda1 /mnt/docker_disk`；设备名变化仍跟随同一 UUID。目标存在文件、符号链接、其他磁盘或子目录挂载时拒绝覆盖。两个路径访问同一份数据，不复制数据，也不改写原厂热插拔脚本。卸载外接盘前应先停止 Docker，再卸载 `/mnt/docker_disk` 兼容挂载。
+
+已在 **RA70 / 1.0.168 / Linux 4.4.60** 真机确认 Docker API 和基础容器运行。浏览器页面操作及整机重启恢复仍需验收。安装默认只准备程序和页面，使用 `--start` 或网页开关才会启动 Docker。
 
 ## 准备与安装
 
@@ -12,12 +14,12 @@
 
 1. 刷入原版 1.0.168，恢复 root SSH。SSH 工具的前提见[统一说明](../../ssh/README.md)。脚本本身不能恢复 SSH。
 2. 连接已格式化为 ext4 的 USB 盘，用 `cat /proc/mounts` 确定实际挂载点，例如 `/extdisks/sda1`。必须为可读写、允许执行的真实挂载点；也支持已有 `/mnt/docker_disk`。脚本不分区、不格式化、不挑选第一块盘，后续按 UUID 查找同一分区。新装至少需 256 MiB 可用空间，镜像/容器另需空间。
-3. 将 [1.0.168 离线安装包](../../dist/1.0.168/router-docker-1.0.168-v1.1.0.tar.gz) 和 [SHA-256 校验文件](../../dist/1.0.168/router-docker-1.0.168-v1.1.0.tar.gz.sha256) 上传到 USB 盘，校验后解包；包内含已核对的原厂 Docker 下载包，不占用路由器内置存储保存大包。
+3. 将 [1.0.168 离线安装包](../../dist/1.0.168/router-docker-1.0.168-v1.1.3.tar.gz) 和 [SHA-256 校验文件](../../dist/1.0.168/router-docker-1.0.168-v1.1.3.tar.gz.sha256) 上传到 USB 盘，校验后解包；包内含已核对的原厂 Docker 下载包，不占用路由器内置存储保存大包。
 
 ```sh
 cd /extdisks/sda1
-sha256sum -c router-docker-1.0.168-v1.1.0.tar.gz.sha256
-tar -xzf router-docker-1.0.168-v1.1.0.tar.gz
+sha256sum -c router-docker-1.0.168-v1.1.3.tar.gz.sha256
+tar -xzf router-docker-1.0.168-v1.1.3.tar.gz
 cd router-docker-1.0.168
 
 # 核对状态，不安装
@@ -34,15 +36,15 @@ sh install-router-docker.sh apply --disk /extdisks/sda1 --start
 
 已有旧盘时，保留原 `mi_docker/` 目录。八个程序与原厂摘要一致则复用，数据仍位于该盘 `mi_docker/lib/docker/`。程序版本不同或缺损时拒绝覆盖；脚本不会自动升级/降级引擎或删除数据。刷固件前应另外保存重要容器数据。
 
-## 从工具 1.0.0 升级
+## 从旧版工具升级
 
-上传并解包 1.1.0 完整离线包，在新目录运行：
+上传并解包 1.1.3 完整离线包，在新目录运行：
 
 ```sh
 sh install-router-docker.sh upgrade
 ```
 
-只接受已核对的 1.0.0 运行文件，保留 Docker 开关、磁盘 UUID、Portainer 配置、原厂备份及所有容器数据。升级前运行文件留在 `/data/router-docker-1.0.168/upgrade-1.0.0.*/`，升级失败尝试回退。升级不主动重启正在运行的 Docker；新就绪检查在下次启动生效。如需立即启用，明确执行 `stop` 再执行 `start`，容器会短暂中断。
+只接受已核对的 1.0.0、1.1.0、1.1.1 或 1.1.2 运行文件，保留 Docker 开关、磁盘 UUID、Portainer 配置、原厂备份及所有容器数据。升级前运行文件留在 `/data/router-docker-1.0.168/upgrade-旧版本.*/`，升级失败尝试回退。升级不主动重启正在运行的 Docker；页面布局及图标修复刷新后生效。cgroup 兼容修复和磁盘绑定挂载在下次启动生效，如从不含这些功能的旧版升级并需立即启用，明确执行 `stop` 再执行 `start`，容器会短暂中断。
 
 ## 开机 API 就绪检查
 
@@ -100,7 +102,7 @@ OTA、出厂恢复或再次刷机后，需要重新恢复 SSH 并重新执行部
 
 此版使用小米包 `docker-19.03.15-ce.tgz`：CLI 19.03.15、厂商构建 dockerd `dev` / API 1.40、containerd 1.3.9、runc 1.0.0-rc10。它是恢复原厂功能的兼容基线，**不是固件支持的最高 Docker 版本**。Linux 4.4.60 缺少 seccomp 的既有限制仍然存在。组件摘要、来源及与上游版本的区别见 [SOURCES.md](SOURCES.md)。
 
-离线验证不启动 WSL Docker，也不接触在线路由器；覆盖型号/版本/文件保护、指定磁盘、原厂摘要、重复部署、故障回退、卸载保留数据、LuCI API 鉴权注册与参数保护。真机仍需验证 `docker info`、本地测试容器、bridge DNS/出网/端口映射、bind/volume 持久化、资源限制和重启后的同 UUID 磁盘恢复。原厂页面浏览器端到端验收同样待完成。
+离线验证不启动 WSL Docker，也不接触在线路由器；覆盖型号/版本/文件保护、指定磁盘、原厂摘要、重复部署、故障回退、卸载保留数据、LuCI API 鉴权注册与参数保护。已在一台 RA70 / 1.0.168 真机通过 `docker info`、本地测试容器、bridge DNS 查询与 HTTP 出网、端口映射、volume 跨容器持久化、`/mnt/docker_disk` 目录 bind mount、CPU/内存/PID 限制，以及原厂模板编译和 Docker 只读管理接口检查。镜像仓库拉取、整机重启后的磁盘恢复和原厂页面浏览器端到端操作仍未验收；不将 DNS 查询成功视为 Docker Hub 可访问。
 
 重新打包（在仓库根目录执行，Python 3.10+）：
 

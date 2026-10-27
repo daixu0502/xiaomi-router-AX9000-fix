@@ -4,7 +4,8 @@ set -eu
 . /data/router-docker-1.0.168/runtime/common.sh
 check_rom
 [ "$(id -u)" = 0 ] || die '请通过 root SSH 执行。'
-[ -f "$BASE/installed" ] && [ "$(cat "$BASE/installed")" = 1.1.0 ] || die '请先将 Docker 自启修复升级到 1.1.0。'
+[ -f "$BASE/installed" ] || die '尚未安装 Docker 自启修复。'
+case "$(cat "$BASE/installed")" in 1.1.0|1.1.1|1.1.2|1.1.3) ;; *) die '请先将 Docker 自启修复升级到 1.1.3。' ;; esac
 (cd "$BASE/runtime" && sha256sum -c SHA256SUMS >/dev/null) || die 'Docker 运行文件已改变。'
 (cd / && sha256sum -c "$BASE/owned.sha256" >/dev/null) || die 'Docker 服务或页面已改变。'
 ACTION=${1:-status}
