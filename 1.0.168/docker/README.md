@@ -12,10 +12,11 @@
 
 1. 刷入原版 1.0.168，恢复 root SSH。SSH 工具的前提见[统一说明](../../ssh/README.md)。脚本本身不能恢复 SSH。
 2. 连接已格式化为 ext4 的 USB 盘，用 `cat /proc/mounts` 确定实际挂载点，例如 `/extdisks/sda1`。必须为可读写、允许执行的真实挂载点；也支持已有 `/mnt/docker_disk`。脚本不分区、不格式化、不挑选第一块盘，后续按 UUID 查找同一分区。新装至少需 256 MiB 可用空间，镜像/容器另需空间。
-3. 将 [1.0.168 离线安装包](../../dist/1.0.168/router-docker-1.0.168-v1.1.0.tar.gz) 上传并解包到 USB 盘；包内含已核对的原厂 Docker 下载包，不占用路由器内置存储保存大包。
+3. 将 [1.0.168 离线安装包](../../dist/1.0.168/router-docker-1.0.168-v1.1.0.tar.gz) 和 [SHA-256 校验文件](../../dist/1.0.168/router-docker-1.0.168-v1.1.0.tar.gz.sha256) 上传到 USB 盘，校验后解包；包内含已核对的原厂 Docker 下载包，不占用路由器内置存储保存大包。
 
 ```sh
 cd /extdisks/sda1
+sha256sum -c router-docker-1.0.168-v1.1.0.tar.gz.sha256
 tar -xzf router-docker-1.0.168-v1.1.0.tar.gz
 cd router-docker-1.0.168
 
@@ -97,7 +98,7 @@ OTA、出厂恢复或再次刷机后，需要重新恢复 SSH 并重新执行部
 
 ## 固定组件与验证
 
-此版使用小米包 `docker-19.03.15-ce.tgz`：CLI 19.03.15、厂商构建 dockerd `dev` / API 1.40、containerd 1.3.9、runc 1.0.0-rc10。它是恢复原厂功能的兼容基线，**不是固件支持的最高 Docker 版本**。Linux 4.4.60 缺少 seccomp 的既有限制仍然存在。组件摘要、来源及与上游版本的区别见 [SOURCES.md](SOURCES.md) 和[固件分析](../docs/ax9000-1.0.168-docker-feasibility.md)。
+此版使用小米包 `docker-19.03.15-ce.tgz`：CLI 19.03.15、厂商构建 dockerd `dev` / API 1.40、containerd 1.3.9、runc 1.0.0-rc10。它是恢复原厂功能的兼容基线，**不是固件支持的最高 Docker 版本**。Linux 4.4.60 缺少 seccomp 的既有限制仍然存在。组件摘要、来源及与上游版本的区别见 [SOURCES.md](SOURCES.md)。
 
 离线验证不启动 WSL Docker，也不接触在线路由器；覆盖型号/版本/文件保护、指定磁盘、原厂摘要、重复部署、故障回退、卸载保留数据、LuCI API 鉴权注册与参数保护。真机仍需验证 `docker info`、本地测试容器、bridge DNS/出网/端口映射、bind/volume 持久化、资源限制和重启后的同 UUID 磁盘恢复。原厂页面浏览器端到端验收同样待完成。
 

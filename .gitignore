@@ -35,3 +35,6 @@ test_*.lua
 *.test.*
 *.spec.*
 !*.md
+
+# Firmware research documents stay local, including Markdown.
+/1.0.168/docs/
