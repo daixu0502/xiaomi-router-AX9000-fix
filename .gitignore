@@ -1,6 +1,7 @@
 # Local build tools, downloads, configuration and caches
 /.tools/
 /local/
+/rom/
 .env
 .env.*
 **/__pycache__/
@@ -15,12 +16,9 @@
 authorized_keys
 known_hosts*
 
-# Keep only the reviewed current installation package in source control.
+# Distribution packages under dist/ are committed with source.
 !/dist/
-/dist/*
-!/dist/README.md
-!/dist/router-ssh-modern-2026.94-aarch64-v2.tar.gz
-!/dist/router-ssh-modern-2026.94-aarch64-v2.tar.gz.sha256
+!/dist/**
 
 # Tests remain local. Markdown documentation is allowed.
 **/tests/**

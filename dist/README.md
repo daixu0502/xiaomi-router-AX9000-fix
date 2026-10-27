@@ -1,29 +1,33 @@
-# 安装包
+# 安装包与下载入口
 
-目标设备和固件：**小米 AX9000（RA70）原厂开发版 1.0.140**。其他版本未验证，安装器仍须核对原文件和配置摘要；详见[固件说明](../README.md#针对的原厂固件)。
+## 仓库说明
 
-| 包 | 用途 | 校验 |
+`dist/` 按固件版本保存分发内容，目录、安装包和摘要均提交到 GitHub。两版共用的工具放在 `common/`。
+
+## 工具说明
+
+| 目录 | 内容 |
+| --- | --- |
+| [1.0.140](1.0.140/README.md) | 原厂开发版的 Docker 自启、代理、MAC 与 DHCP 单文件修复下载入口 |
+| [1.0.168](1.0.168/README.md) | 原厂稳定版的 Docker 与原厂页面恢复离线包、MAC 与 DHCP `/16` 修复入口 |
+| [common](common/README.md) | 两版共用的 SSH 现代算法安装包及 SSH 恢复工具链接 |
+
+## 工具链接
+
+| 安装包 | 校验 | 使用说明 |
 | --- | --- | --- |
-| [router-ssh-modern-2026.94-aarch64-v2.tar.gz](router-ssh-modern-2026.94-aarch64-v2.tar.gz) | AX9000 ARM64 SSH 现代算法升级，含静态 Dropbear 2026.94 与安装器 | [SHA-256](router-ssh-modern-2026.94-aarch64-v2.tar.gz.sha256) |
+| [1.0.168 Docker 与原厂页面](1.0.168/router-docker-1.0.168-v1.0.0.tar.gz) | [SHA-256](1.0.168/router-docker-1.0.168-v1.0.0.tar.gz.sha256) | [说明](../1.0.168/docker/README.md) |
+| [两版共用 SSH 现代算法](common/router-ssh-modern-2026.94-aarch64-v2.tar.gz) | [SHA-256](common/router-ssh-modern-2026.94-aarch64-v2.tar.gz.sha256) | [说明](../ssh-modern/README.md) |
 
-v2 整理了仓库目录、使用说明和 Ed25519 密钥登录步骤，程序与已验证的 2026.94 构建相同。
+## 使用说明
 
-该包包含 `bin/dropbear`、`fix-router-ssh-modern.sh`、README、构建来源、程序摘要、构建配置和 Dropbear/musl/Zig 许可证，不包含设备密码、私钥、配置副本、授权公钥或测试代码。
+下载完整安装包和同名 `.sha256` 文件，在两者所在目录执行 `sha256sum -c 包名.tar.gz.sha256`，然后解包并按对应工具说明安装。单文件修复从相应固件目录的下载入口获取，通过 root SSH 执行。
 
-下载后可在 Linux/WSL 中检查归档摘要：
+## 注意事项
 
-```sh
-sha256sum -c router-ssh-modern-2026.94-aarch64-v2.tar.gz.sha256
-```
+- 固件专用工具不能跨版本套用，共用 SSH 工具仍有启动结构与配置检查。
+- 1.0.168 Docker 包默认不启动服务，需已恢复 root SSH 和已挂载的 ext4 外接盘；Portainer 镜像需另行配置。
+- 1.0.168 工具仍待真机验收；现有离线/隔离检查不代表实际容器与浏览器回归已完成。
+- 安装包不包含原厂 ROM、测试代码、设备密码、私钥或配置备份。
 
-解压后检查程序摘要，再按包内 README 分阶段安装：
-
-```sh
-tar -xzf router-ssh-modern-2026.94-aarch64-v2.tar.gz -C /path/to/empty-directory
-cd /path/to/empty-directory
-sha256sum -c SHA256SUMS
-```
-
-安装器在路由器上使用固定的程序 MD5 做额外一致性检查；下载的完整性以此目录发布的 SHA-256 为准。首次安装流程见 [SSH README](../ssh-modern/README.md)。
-
-其他功能为独立 Shell 脚本，直接从各功能目录下载，无需此安装包。本地旧归档、构建依赖及缓存不收入 Git 索引，仓库仅跟踪当前核对过的版本化安装包。
+[返回仓库说明](../README.md)

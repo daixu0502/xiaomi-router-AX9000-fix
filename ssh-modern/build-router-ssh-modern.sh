@@ -4,10 +4,11 @@ set -eu
 FEATURE_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 ROOT=$(CDPATH= cd -- "$FEATURE_DIR/.." && pwd)
 CACHE=$ROOT/.tools/ssh-modern
+DIST=$ROOT/dist/common
 VERSION=2026.94
 SOURCE_SHA=e098034a843699200c8c977a991fff73159735bf795d5f72ef672c41a6b1ae81
 ZIG_SHA=24aeeec8af16c381934a6cd7d95c807a8cb2cf7df9fa40d359aa884195c4716c
-mkdir -p "$CACHE/downloads" "$CACHE/out" "$ROOT/dist"
+mkdir -p "$CACHE/downloads" "$CACHE/out" "$DIST"
 fetch() {
     file=$1; url=$2; expected=$3
     [ -f "$file" ] || curl -fL --retry 2 -o "$file" "$url"
@@ -67,10 +68,10 @@ if [ -f "$FEATURE_DIR/fix-router-ssh-modern.sh" ]; then
     cp "$FEATURE_DIR/README.md" "$PACKAGE/README.md"
     printf 'Dropbear %s\nSource: https://matt.ucc.asn.au/dropbear/releases/dropbear-%s.tar.bz2\nSource SHA256: %s\nCompiler: Zig 0.14.1, target aarch64-linux-musl, static\nToolchain SHA256: %s\n' "$VERSION" "$VERSION" "$SOURCE_SHA" "$ZIG_SHA" > "$PACKAGE/SOURCE.txt"
     (cd "$PACKAGE"; sha256sum bin/dropbear > SHA256SUMS; md5sum bin/dropbear > MD5SUMS)
-    ARCHIVE_TMP=$(mktemp "$ROOT/dist/.router-ssh-modern.XXXXXX")
+    ARCHIVE_TMP=$(mktemp "$DIST/.router-ssh-modern.XXXXXX")
     tar -czf "$ARCHIVE_TMP" -C "$PACKAGE" .
-    ARCHIVE=$ROOT/dist/router-ssh-modern-$VERSION-aarch64-v2.tar.gz
+    ARCHIVE=$DIST/router-ssh-modern-$VERSION-aarch64-v2.tar.gz
     mv -f "$ARCHIVE_TMP" "$ARCHIVE"
-    (cd "$ROOT/dist"; sha256sum "$(basename "$ARCHIVE")" > "$(basename "$ARCHIVE").sha256")
+    (cd "$DIST"; sha256sum "$(basename "$ARCHIVE")" > "$(basename "$ARCHIVE").sha256")
     echo "$ARCHIVE"
 fi

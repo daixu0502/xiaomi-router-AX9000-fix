@@ -1,5 +1,5 @@
 #!/bin/sh
-# AX9000: staged Dropbear upgrade, same port and authentication settings.
+# AX9000 1.0.140/1.0.168: staged upgrade, known 22/3964 port profiles.
 set -eu
 BASE=/data/router-ssh-modern
 INIT=/etc/init.d/dropbear
@@ -11,6 +11,7 @@ EC=$BASE/keys/dropbear_ecdsa_host_key
 LOCK=/tmp/router-ssh-modern.lock
 STOCK_INIT_MD5=2d6bbcc437d74b63ba022055c4e0f109
 STOCK_CONFIG_MD5=776f976aa34d90133a724e4a3c6b3c63
+DEFAULT_CONFIG_MD5=4ff9c827d4f95ca5082a5520c03e1419
 BINARY_MD5=7f47b9c263de7fb3c5707fa3c4675292
 TMP=
 LOCKED=0
@@ -29,7 +30,7 @@ usage() {
     say "用法：sh $0 prepare [二进制路径] | candidate-ok | activate | confirm | status | restore"
     say 'prepare：备份并启动仅监听 127.0.0.1:13964 的候选服务。'
     say '候选 SSH 登录成功后在该连接中执行 candidate-ok，再通过原连接执行 activate。'
-    say 'activate：在原端口 3964 切换；120 秒内必须通过新 SSH 连接执行 confirm，否则回退。'
+    say 'activate：保留已核对的原端口（22 或 3964）；120 秒内从新 SSH 连接 confirm，否则回退。'
     say '不改密码、授权公钥、SSH 端口、防火墙或原 RSA 主机密钥。'
 }
 ACTION=${1:-status}
@@ -42,6 +43,13 @@ for tool in md5sum awk cmp mktemp readlink; do command -v "$tool" >/dev/null || 
 [ -f "$INIT" ] && [ ! -L "$INIT" ] || die 'SSH 启动脚本不存在或为符号链接。'
 [ -s "$RSA" ] && [ ! -L "$RSA" ] || die '原 RSA 主机密钥不存在或为符号链接。'
 [ ! -L "$BASE" ] || die '持久目录不能为符号链接。'
+FORMAL_PORT=
+if [ -f /etc/config/dropbear ] && [ ! -L /etc/config/dropbear ]; then
+    case "$(hash /etc/config/dropbear)" in
+        "$STOCK_CONFIG_MD5") FORMAL_PORT=3964 ;;
+        "$DEFAULT_CONFIG_MD5") FORMAL_PORT=22 ;;
+    esac
+fi
 
 valid_backup() {
     [ -f "$BASE/dropbear.init.original" ] && [ ! -L "$BASE/dropbear.init.original" ] || die '缺少原启动脚本备份。'
@@ -92,7 +100,7 @@ mkdir "$LOCK" 2>/dev/null || die "已有操作或残留锁：$LOCK"
 LOCKED=1
 umask 077
 if [ "$ACTION" = prepare ]; then
-    [ "$(hash /etc/config/dropbear)" = "$STOCK_CONFIG_MD5" ] || die 'SSH 配置与已核对版本不同，拒绝套用启动参数。'
+    [ -n "$FORMAL_PORT" ] || die 'SSH 配置不属于已核对的 22/3964 配置，拒绝套用启动参数。'
     [ "$(hash "$INIT")" = "$STOCK_INIT_MD5" ] || die '当前不是已核对的原厂启动脚本。'
     INPUT=${2:-$(dirname "$0")/bin/dropbear}
     [ -f "$INPUT" ] && [ ! -L "$INPUT" ] || die '请使用安装包附带的 bin/dropbear。'
@@ -134,7 +142,7 @@ if [ "$ACTION" = prepare ]; then
     candidate=$!
     sleep 1
     kill -0 "$candidate" 2>/dev/null || die '候选服务启动失败，请检查 /tmp/router-ssh-modern-candidate.log。'
-    say '候选服务已启动，仅监听 127.0.0.1:13964；原端口服务未改变。'
+    say "候选服务已启动，仅监听 127.0.0.1:13964；原端口 $FORMAL_PORT 服务未改变。"
     say "在候选 SSH 连接内执行：sh $SELF candidate-ok"
     exit 0
 fi
@@ -148,8 +156,10 @@ if [ "$ACTION" = candidate-ok ]; then
     exit 0
 fi
 if [ "$ACTION" = confirm ]; then
+    [ -n "$FORMAL_PORT" ] || die '当前 SSH 配置不属于已核对的端口配置。'
+    cmp -s /etc/config/dropbear "$BASE/dropbear.config.original" || die '切换后 SSH 配置已改变，拒绝确认。'
     set -- ${SSH_CONNECTION:-}
-    [ "$#" = 4 ] && [ "$4" = 3964 ] && modern_ancestor || die '必须通过正式端口 3964 的新版 SSH 连接确认。'
+    [ "$#" = 4 ] && [ "$4" = "$FORMAL_PORT" ] && modern_ancestor || die "必须通过正式端口 $FORMAL_PORT 的新版 SSH 连接确认。"
     [ -f "$BASE/pending" ] || die '当前没有等待确认的切换。'
     cmp -s "$INIT" "$BASE/dropbear.init.managed" || die '启动脚本已变化。'
     : > "$BASE/confirmed"
@@ -172,6 +182,7 @@ if [ "$ACTION" = restore ]; then
 fi
 
 [ -f "$BASE/candidate-verified" ] || die '请先通过候选服务验证密码登录并执行 candidate-ok。'
+[ -n "$FORMAL_PORT" ] || die 'SSH 配置不属于已核对的 22/3964 配置，拒绝切换。'
 [ ! -f "$BASE/pending" ] || die '已有等待确认的切换。'
 [ "$(hash "$INIT")" = "$STOCK_INIT_MD5" ] || die '当前启动脚本不是已核对的原版。'
 cmp -s /etc/config/dropbear "$BASE/dropbear.config.original" || die '准备后 SSH 配置已变化。'
@@ -203,6 +214,6 @@ rm -f "$BASE/confirmed"
 : > "$BASE/pending"
 (trap '' HUP; exec /bin/sh "$SELF" watchdog) </dev/null >/tmp/router-ssh-modern-watchdog.log 2>&1 &
 mv "$TMP" "$INIT"; TMP=
-say '正在切换原端口 3964；120 秒内请通过新版 SSH 登录并执行 confirm。'
+say "正在切换原端口 $FORMAL_PORT；120 秒内请通过新版 SSH 登录并执行 confirm。"
 /etc/init.d/dropbear restart
 say "确认命令：sh $SELF confirm"

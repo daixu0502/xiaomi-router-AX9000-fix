@@ -1,0 +1,387 @@
+<%
+--[[
+    Info    iptv
+]]--
+%>
+<%include("web/inc/head")%>
+<title><%:小米路由器%></title>
+<meta name="viewport" content="width=1200">
+<link href="<%=resource%>/web/css/bc.css?v=<%=ver%>" rel="stylesheet">
+<link href="<%=resource%>/web/css/wifi.css?v=<%=ver%>" rel="stylesheet">
+<link href="<%=resource%>/web/css/docker.css?v=<%=ver%>" rel="stylesheet">
+</head>
+<body>
+<div id="doc">
+    <%include("web/inc/header")%>
+    <div id="bd">
+        <div class="mod-set mod-docker"></div>
+    </div>
+    <%include("web/inc/footer")%>
+</div>
+<%include("web/inc/g.js")%>
+<script type="text/tmpl" id="installState">
+    <div class="installState">
+        <p class="installStateImg"><img src="<%=resource%>/web/img/install-docker.png"/></p>
+        <p class="info">
+            小米路由器AX9000稳定版1.0.168 Docker恢复工具。使用SSH部署时指定的ext4外接盘；点击安装可恢复程序，现有容器和卷数据会保留。
+        </p>
+        <p style="text-align:left">磁盘按UUID识别；更换磁盘前请通过SSH核对部署配置。<p>
+        <p>
+            <a href="#" id="installDockerBtn" class="btn btn-dft btn-l"><span>安装Docker</span></a>
+        </p>
+        <p>
+            <span>更多Docker介绍，跳转</span><a href="http://www1.miwifi.com/docker/index.html">小米路由器Docker专栏</a>
+        </p>
+    </div>
+</script>
+<script type="text/tmpl" id="manageState">
+    <div class="hd">
+        <div class="help">
+            <span class="info">如何使用Docker</span>
+            <span class="ico"></span>
+            <span class="arrow-wrap" id="helpArrow">
+                <span class="arrow1"></span>
+                <span class="arrow2"></span>
+            </span>
+        </div>
+        <h3><%:运行Docker%></h3>
+        <div class="switch">
+            {if ($docker == "1")}
+                <a href="#" id="dockerSwitch" class="btn-switch btn-switch-on" data-on="1"></a>
+            {else}
+                <a href="#" id="dockerSwitch" class="btn-switch btn-switch-off" data-on="0"></a>
+            {/if}
+        </div>
+    </div>
+    <div class="bd">
+        <div class="section section-help" id="helpSection">
+            <div class="help-cont">
+                <span class="help-close"></span>
+                <div class="what">
+                    <h3><%:如何使用Docker？%></h3>
+                </div>
+                <div class="qa">
+                    <p><%:Docker安装成功后，需要通过安装第三方管理来对它进行使用和管理。%></p>
+                    <p><%:1.单击安装第三方管理按钮，此时会进行第三方管理工具的安装；%></p>
+                    <p><%:2.管理工具安装成功后，单击管理Docker按钮，网页会跳转至第三方Portainer管理页面，此页面集成了容器、镜像的基本操作功能和信息展示、管理等功能。%></p>
+                </div>
+            </div>
+        </div>
+        <div class="buttonList">
+            {if ($portainer == "1")}
+                <button class="btn  btn-l btn-no" disabled><span><%:安装第三方管理%></span></button>
+            {else}
+                <a href="#" id="installPortainerBtn" class="btn btn-dft btn-l" data-portainer="{$portainer}"><span><%:安装第三方管理%></span></a>
+            {/if}
+            {if ($portainer == "0" || $docker == "0")}
+                <button class="btn  btn-l btn-no"  disabled><span><%:管理Docker%></span></button>
+            {else}
+                <a href="#" id="manageDockerBtn" class="btn btn-dft btn-l" data-portainer="{$portainer}"><span><%:管理Docker%></span></a>
+            {/if}
+            {if ($docker == "1")}
+                <button class="btn  btn-l btn-no"  disabled><span><%:停用并保留数据%></span></button>
+            {else}
+                <a href="#" id="uninstallDockerBtn" class="btn btn-dft btn-l" data-docker="{$docker}"><span><%:停用并保留数据%></span></a>
+            {/if}
+        </div>
+        <div class="con">
+            <p><%:路由器外接存储器检测：%>
+                {if ($disk_type && $disk_size)}
+                    <span class="format">{$disk_type}</span> | <span class="size">{$disk_size}</span>
+                {else}
+                    <span class="span-n"><%:未检测到%></span>
+                {/if}
+            </p>
+            <p><%:第三方Portainer管理：%>
+                {if ($portainer == "1")}
+                    <span class="portainerState span-y"><%:可用%><span style="color:#333">（首次打开管理页时创建管理员账户）</span></span>
+                {else}
+                    <span class="portainerState span-n"><%:不可用，请先安装第三方管理%></span>
+                {/if}
+            </p>
+        </div>
+    </div>
+</script>
+<script type="text/tmpl" id="installDockerInfo">
+    <div class="install-loading">
+        <p>Docker文件安装中，请勿拔出与路由器相连的存储器</p>
+        <img id="loading_docker" src="<%=resource%>/web/img/mesh_loading.png"/>
+    </div>
+</script>
+<script type="text/tmpl" id="installPortainerInfo">
+    <div class="install-loading">
+        <p>第三方管理安装中，请勿拔出与路由器相连的存储器</p>
+        <img id="loading_docker" src="<%=resource%>/web/img/mesh_loading.png"/>
+    </div>
+</script>
+<script>
+$(function(){
+    var timeout,install_dialog
+    var count = 0
+    //获取docker状态信息
+    $.getJSON('<%=luci.dispatcher.build_url("api","routerdocker168","get_docker_info")%>').done(function(rsp){
+        var install_docker = rsp.install_docker ? rsp.install_docker : 0
+        var container = $('.mod-docker')
+        var tplData = {}
+        var tpl = $('#installState').html()
+        if( install_docker == 1 ){
+            tpl = $('#manageState').html()
+            tplData = rsp
+        }
+        container.html( tpl.tmpl(tplData) )
+    })
+
+    //获取安装Docker/安装第三方管理的状态
+    var getInstallStatus = function (mode){
+        //超时1分钟取消请求 / 超时5分钟取消请求,每2秒/请求
+        var time = mode == 2 ? count >= 30 : count >= 30 * 5
+        if( time ){
+            var title = mode == 1 ? '<%:Docker安装%>' : mode == 2 ? '<%:Docker卸载%>' : '<%:安装第三方管理%>'
+            count = 0
+            clearInterval(timeout)
+            if( mode == 2 ){
+                $.pub('loading:stop');
+                $.alert( '<%:卸载超时，请稍候重试%>' );
+            }else{
+                install_dialog.close()
+                $.alert( '<%:安装超时，请稍候重试%>' ).title(title)
+            }
+        }
+        $.getJSON('<%=luci.dispatcher.build_url("api","routerdocker168","get_docker_info")%>').done(function(rsp){
+            if (!rsp.busy && parseInt(rsp.last_result, 10) > 0) {
+                clearInterval(timeout);
+                if (install_dialog) { install_dialog.close(); }
+                $.pub('loading:stop');
+                $.alert('<%:操作失败，请通过SSH查看部署日志后重试。%>');
+                return;
+            }
+            var docker_suc = rsp.install_docker_success
+            var portainer_suc = rsp.portainer
+            var docker_uninstall = rsp.install_docker
+            //docker安装
+            if( mode == 1 ){
+                if( docker_suc  == 1 ){
+                    install_dialog.close()
+                    $.dialog({
+                        id : "confirm",
+                        width: 390,
+                        title : '<%:Docker安装%>',
+                        content : '<%:安装成功！%>',
+                        ok: function(){
+                            window.location.reload();
+                        },
+                    }).lock();
+                    clearInterval(timeout)
+                }
+            }else if( mode == 2 ){
+                if( docker_uninstall  == 0 ){
+                    window.location.reload()
+                }
+            }else{
+                if( portainer_suc == 1 ){
+                    install_dialog.close()
+                    $.dialog({
+                        id : "confirm",
+                        width: 390,
+                        title : '<%:安装第三方管理%>',
+                        content : '<%:安装成功！%>',
+                        ok: function(){
+                            window.location.reload();
+                        },
+                    }).lock();
+                    clearInterval(timeout)
+                }
+            }
+        })
+    }
+
+
+
+
+
+    $('body').delegate('#installDockerBtn,#uninstallDockerBtn', 'click', function(e){
+        e.preventDefault()
+        var el = e.currentTarget.getAttribute('id')
+        var mode = el == 'installDockerBtn' ? 1 : 0
+        if( mode == 1 ){
+            var dialog = $.dialog({
+                id : "confirm",
+                width: 390,
+                title : '<%:确认信息%>',
+                content : '<%:执行此操作将会安装docker文件到EXT4格式与此路由器直连的存储器中，请确认是否继续进行？%>',
+                ok: function(){
+                    dialog.close()
+                    install_dialog = $.dialog({
+                        id : "confirm",
+                        width: 390,
+                        title : '<%:Docker安装%>',
+                        content : $('#installDockerInfo').html(),
+                        cancel: function () {
+                            clearInterval(timeout)
+                        }
+                    }).lock()
+                    installOrUninstallDocker(mode)
+                },
+                cancel: function () {}
+            }).lock();
+        }else{
+            var dialog = $.dialog({
+                id : "confirm",
+                width: 390,
+                title : '<%:确认信息%>',
+                content : '<%:确认停用Docker？程序、容器、镜像和卷数据将保留。%>',
+                ok: function(){
+                    dialog.close()
+                    $.pub('loading:start');
+                    installOrUninstallDocker(mode)
+                },
+                cancel: function () {}
+            }).lock();
+        }
+    })
+
+    $('body').delegate('#installPortainerBtn', 'click', function(e){
+        var mode = 1
+        install_dialog = $.dialog({
+            id : "confirm",
+            width: 390,
+            title : '<%:安装第三方管理%>',
+            content : $('#installPortainerInfo').html(),
+            cancel: function () {
+                clearInterval(timeout)
+            }
+        }).lock()
+        installOrUninstallPortainer(mode)
+    })
+
+    //安装docker环境
+    function installOrUninstallDocker (mode){
+        //1 安装，0 卸载
+        var requestData = {mode: mode}
+        $.ajax({
+            url: '<%=luci.dispatcher.build_url("api", "routerdocker168", "set_mi_docker_environment")%>',
+            dataType: 'json',
+            timeout: 300000,
+            type: 'POST',
+            data: requestData,
+            success: function( rsp ){
+                if( mode == 1 ){
+                    if( rsp.code === 0 ){
+                        timeout = setInterval(function(){
+                            getInstallStatus(1)
+                            ++ count
+                        },2000)
+                    } else {
+                        //docker已经安装
+                        if( rsp.code == 1700 ){
+                            timeout = setInterval(function(){
+                                getInstallStatus(1)
+                                ++ count
+                            },2000)
+                        }else{
+                            install_dialog.close();
+                            $.alert( rsp.msg ).title('<%:Docker安装%>');
+                        }
+                    }
+                }else{
+                    timeout = setInterval(function(){
+                        getInstallStatus(2)
+                        ++ count
+                    },2000)
+                }
+            },
+            error: function() {
+                if( mode == 1 ){
+                    install_dialog.close();
+                }else{
+                    $.pub('loading:stop');
+                }
+                $.alert( '<%:网络异常，请检查是否联网%>' );
+            }
+        });
+    }
+
+    //安装portainer
+    function installOrUninstallPortainer (mode){
+        //1 安装，0 卸载
+        var requestData = {mode: mode}
+        $.ajax({
+            url: '<%=luci.dispatcher.build_url("api", "routerdocker168", "set_portainer_environment")%>',
+            dataType: 'json',
+            timeout: 300000,
+            type: 'POST',
+            data: requestData,
+            success: function( rsp ){
+                if( rsp.code === 0 ){
+                    timeout = setInterval(function(){
+                        getInstallStatus(0)
+                        ++ count
+                    },2000)
+                }else{
+                    //portainer正在安装或已经安装
+                    if( rsp.code == 1708 ){
+                        timeout = setInterval(function(){
+                            getInstallStatus(0)
+                            ++ count
+                        },2000)
+                    }else{
+                        install_dialog.close();
+                        $.alert( rsp.msg ).title('<%:安装第三方管理%>');
+                    }
+                }
+            },
+            error: function() {
+                install_dialog.close();
+                $.alert( '<%:网络异常，请检查是否联网%>' );
+            }
+        });
+    }
+
+
+    //运行Docker开关(开启/关闭docker服务)
+    $('body').delegate('#dockerSwitch', 'click', function(e){
+        e.preventDefault()
+        $.pub('loading:start');
+        var mode = $(this).attr('data-on') == '1' ? 0 : 1
+        var requestData = {mode: mode}
+        $.ajax({
+            url: '<%=luci.dispatcher.build_url("api", "routerdocker168", "set_mi_docker")%>',
+            dataType: 'json',
+            timeout: 300000,
+            type: 'POST',
+            data: requestData,
+            success: function( rsp ){
+                $.pub('loading:stop');
+                if( rsp.code === 0 ){
+                    window.location.reload();
+                }else{
+                    $.alert( rsp.msg );
+                }
+            },
+            error: function() {
+                $.pub('loading:stop');
+                $.alert( '<%:网络异常，请检查是否联网%>' );
+            }
+        });
+    })
+
+    //管理Docker
+    $('body').delegate('#manageDockerBtn', 'click', function(e){
+        e.preventDefault()
+        var toUrl = 'http://' + window.location.hostname + ':9001'
+        window.open( toUrl )
+    })
+
+
+    $('body').delegate('.help .ico', 'click', function(e){
+        $('#helpArrow').show();
+        $('#helpSection').show();
+    })
+    $('body').delegate('.help-close', 'click', function(e){
+        $('#helpArrow').hide();
+        $('#helpSection').hide();
+    })
+})
+</script>
+</body>
+</html>
