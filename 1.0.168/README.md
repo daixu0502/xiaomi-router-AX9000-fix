@@ -21,6 +21,7 @@
 | Docker 服务与原厂页面恢复 | [部署与回退](docker/README.md) | `docker/install-router-docker.sh` |
 | Docker 镜像代理 | [两种运行方式](docker-proxy/README.md) | `docker-proxy/docker-mihomo-proxy.sh` |
 | SSH 现代算法（两版共用） | [ssh-modern](../ssh-modern/README.md) | `ssh-modern/fix-router-ssh-modern.sh`（仓库根目录） |
+| WSL 从 Web 开启 SSH（漏洞待实机验证） | [ssh-open](../ssh-open/README.md) | `ssh-open/open-ssh-wsl.sh`（电脑 WSL 运行，不写 Bdata） |
 | 固化后升级/重置恢复 SSH（两版共用） | [ssh-reopen](../ssh-reopen/README.md) | `ssh-reopen/reopen-ssh-wsl.sh`（仓库根目录） |
 
 MAC 与 DHCP 修复通过 SSH 在路由器上以 root 执行。`status` 只检查；`apply`（无参数时的默认动作）安装补丁；`restore` 恢复对应备份。安装和恢复不改写 DHCP/网络配置，也不重启服务。DHCP 在页面提交时保存配置，并沿用原厂 DNS 服务重启和设备重启行为。

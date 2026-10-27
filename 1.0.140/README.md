@@ -2,9 +2,9 @@
 
 [返回仓库首页](../README.md) · [1.0.168 专用工具](../1.0.168/README.md)
 
-提供 Docker 开机自启、Docker 镜像代理、Web 设置页面、SSH 现代算法修复，以及已硬固化设备升级/重置后的 SSH 恢复。各功能独立存放，按需使用。
+提供 Docker 开机自启、Docker 镜像代理、Web 设置页面、SSH 现代算法修复、Web 开启 SSH，以及已硬固化设备升级/重置后的 SSH 恢复。各功能独立存放，按需使用。
 
-这些脚本针对小米 AX9000 原厂固件的特定路径和启动结构。SSH 恢复工具在电脑 WSL 中运行，通过 Telnet 恢复入口；其余修复通过 SSH 在路由器上以 root 执行。部分修复会核对原文件摘要，遇到不同固件或自定义改动会拒绝覆盖。
+这些脚本针对小米 AX9000 原厂固件的特定路径和启动结构。SSH 开启与恢复工具在电脑 WSL 中运行，分别使用 Web 认证接口和已有 Telnet 入口；其余修复通过 SSH 在路由器上以 root 执行。部分修复会核对原文件摘要，遇到不同固件或自定义改动会拒绝覆盖。
 
 ## 针对的原厂固件
 
@@ -25,6 +25,7 @@
 | WAN 页面 MAC 空值 | [web-wan-mac](web-wan-mac/README.md) | `fix-router-web-mac.sh` | 修改 WAN 模板，不重启服务 |
 | DHCP 保存后页面异常 | [web-dhcp](web-dhcp/README.md) | `fix-router-dhcp-web.sh` | 安装修复不改网络配置；页面保存沿用原厂流程 |
 | SSH 现代算法（两版共用） | [ssh-modern](../ssh-modern/README.md) | `fix-router-ssh-modern.sh` | 分阶段验证后切换 SSH，未确认自动回退 |
+| WSL 从 Web 开启 SSH（两版共用） | [ssh-open](../ssh-open/README.md) | `open-ssh-wsl.sh` | 需 Web 密码；尝试菜单 2 接口，不写 Bdata；漏洞待实机验证 |
 | 固化后升级/重置恢复 SSH（两版共用） | [ssh-reopen](../ssh-reopen/README.md) | `reopen-ssh-wsl.sh` | WSL 经 Telnet 开启 SSH；可选改密，默认保留密码和端口 |
 
 ## 使用入口
@@ -45,6 +46,7 @@ docker-proxy/       Docker 代理脚本及 README
 web-wan-mac/        WAN 模板修复及 README
 web-dhcp/           DHCP 接口修复及 README
 ../ssh-modern/      两版共用的 SSH 升级与构建工具
+../ssh-open/        两版共用的 Web 开启 SSH 工具（WSL）
 ../ssh-reopen/      两版共用的固化后 SSH 恢复工具
 ../dist/1.0.140/    本版本分发入口
 ../dist/common/     两版共用 SSH 包与摘要
