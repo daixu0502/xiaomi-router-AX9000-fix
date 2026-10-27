@@ -6,33 +6,19 @@
 
 仓库地址：[daixu0502/xiaomi-router-AX9000-fix](https://github.com/daixu0502/xiaomi-router-AX9000-fix)。安装包与 SHA-256 一并上传 GitHub，位于 `dist/1.0.140/`、`dist/1.0.168/` 和 `dist/common/`。原厂 ROM、测试代码、构建缓存和设备私有材料只保留本地。
 
-## 工具说明
+## 工具说明与链接
 
-| 适用固件 | 工具 | 用途 |
-| --- | --- | --- |
-| 1.0.140 | Docker 自启修复 | 等待原 Docker 数据盘，使用 procd 托管已有 Docker |
-| 1.0.140 | Docker 镜像代理 | 开关 dockerd 的 HTTP 代理，支持仅保存配置 |
-| 1.0.140 | WAN MAC 页面修复 | 修复查询不到访问者 MAC 时的 WAN 页面 HTTP 500 |
-| 1.0.140 | DHCP 页面修复 | 修正保存参数错配，支持 `/24`、`/16` 地址池 |
-| 1.0.168 | Docker 与原厂页面恢复 | 刷原版后通过 root SSH 补齐 Docker 服务和“高级设置 → DOCKER” |
-| 1.0.168 | WAN MAC 页面修复 | 使用本版模板摘要，修复 MAC 空值报错 |
-| 1.0.168 | DHCP `/16` 修复 | 修正地址池计数和起始偏移，保留本版原厂 `/24` 处理 |
-| 两版共用 | SSH 恢复 | 已硬固化且保留 Telnet 入口时，升级/重置后重新开启 SSH |
-| 两版共用 | SSH 现代算法 | 分阶段升级 Dropbear，增加 Ed25519、ECDSA、RSA-SHA2 支持 |
-
-## 工具链接
-
-| 工具 | 下载 / 源码 | 使用说明 |
-| --- | --- | --- |
-| 1.0.140 Docker 自启 | [脚本](1.0.140/docker-autostart/install-router-docker-autostart.sh) | [说明](1.0.140/docker-autostart/README.md) |
-| 1.0.140 Docker 代理 | [脚本](1.0.140/docker-proxy/docker-mihomo-proxy.sh) | [说明](1.0.140/docker-proxy/README.md) |
-| 1.0.140 MAC 修复 | [脚本](1.0.140/web-wan-mac/fix-router-web-mac.sh) | [说明](1.0.140/web-wan-mac/README.md) |
-| 1.0.140 DHCP 修复 | [脚本](1.0.140/web-dhcp/fix-router-dhcp-web.sh) | [说明](1.0.140/web-dhcp/README.md) |
-| 1.0.168 Docker 与页面 | [离线安装包](dist/1.0.168/router-docker-1.0.168-v1.0.0.tar.gz) · [源码](1.0.168/docker/) · [SHA-256](dist/1.0.168/router-docker-1.0.168-v1.0.0.tar.gz.sha256) | [说明](1.0.168/docker/README.md) |
-| 1.0.168 MAC 修复 | [脚本](1.0.168/web-wan-mac/fix-router-web-mac.sh) | [说明](1.0.168/web-wan-mac/README.md) |
-| 1.0.168 DHCP `/16` | [脚本](1.0.168/web-dhcp/fix-router-dhcp16-web.sh) | [说明](1.0.168/web-dhcp/README.md) |
-| SSH 恢复 | [完整工具目录](ssh-reopen/) | [说明](ssh-reopen/README.md) |
-| SSH 现代算法 | [安装包](dist/common/router-ssh-modern-2026.94-aarch64-v2.tar.gz) · [SHA-256](dist/common/router-ssh-modern-2026.94-aarch64-v2.tar.gz.sha256) | [说明](ssh-modern/README.md) |
+| 适用固件 | 工具 | 用途 | 下载 / 源码 | 使用说明 |
+| --- | --- | --- | --- | --- |
+| 1.0.140 | Docker 自启修复 | 等待原 Docker 数据盘，使用 procd 托管已有 Docker | [脚本](1.0.140/docker-autostart/install-router-docker-autostart.sh) | [说明](1.0.140/docker-autostart/README.md) |
+| 1.0.140 | Docker 镜像代理 | 开关 dockerd 的 HTTP 代理，支持仅保存配置 | [脚本](1.0.140/docker-proxy/docker-mihomo-proxy.sh) | [说明](1.0.140/docker-proxy/README.md) |
+| 1.0.140 | WAN MAC 页面修复 | 修复查询不到访问者 MAC 时的 WAN 页面 HTTP 500 | [脚本](1.0.140/web-wan-mac/fix-router-web-mac.sh) | [说明](1.0.140/web-wan-mac/README.md) |
+| 1.0.140 | DHCP 页面修复 | 修正保存参数错配，支持 `/24`、`/16` 地址池 | [脚本](1.0.140/web-dhcp/fix-router-dhcp-web.sh) | [说明](1.0.140/web-dhcp/README.md) |
+| 1.0.168 | Docker 与原厂页面恢复 | 刷原版后通过 root SSH 补齐 Docker 服务和“高级设置 → DOCKER” | [离线安装包](dist/1.0.168/router-docker-1.0.168-v1.0.0.tar.gz) · [源码](1.0.168/docker/) · [SHA-256](dist/1.0.168/router-docker-1.0.168-v1.0.0.tar.gz.sha256) | [说明](1.0.168/docker/README.md) |
+| 1.0.168 | WAN MAC 页面修复 | 使用本版模板摘要，修复 MAC 空值报错 | [脚本](1.0.168/web-wan-mac/fix-router-web-mac.sh) | [说明](1.0.168/web-wan-mac/README.md) |
+| 1.0.168 | DHCP `/16` 修复 | 修正地址池计数和起始偏移，保留本版原厂 `/24` 处理 | [脚本](1.0.168/web-dhcp/fix-router-dhcp16-web.sh) | [说明](1.0.168/web-dhcp/README.md) |
+| 两版共用 | SSH 恢复 | 已硬固化且保留 Telnet 入口时，升级/重置后重新开启 SSH | [完整工具目录](ssh-reopen/) | [说明](ssh-reopen/README.md) |
+| 两版共用 | SSH 现代算法 | 分阶段升级 Dropbear，增加 Ed25519、ECDSA、RSA-SHA2 支持 | [安装包](dist/common/router-ssh-modern-2026.94-aarch64-v2.tar.gz) · [SHA-256](dist/common/router-ssh-modern-2026.94-aarch64-v2.tar.gz.sha256) | [说明](ssh-modern/README.md) |
 
 版本入口：[1.0.140](1.0.140/README.md) · [1.0.168](1.0.168/README.md) · [安装包目录](dist/README.md)。
 
