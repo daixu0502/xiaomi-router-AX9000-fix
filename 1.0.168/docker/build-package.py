@@ -12,7 +12,7 @@ if hashlib.sha256(args.engine_archive.read_bytes()).hexdigest() != SHA:
     raise SystemExit('Vendor Docker archive SHA-256 mismatch')
 payload = sorted(p for p in (HERE/'payload').iterdir() if p.is_file() and p.name != 'SHA256SUMS')
 (HERE/'payload/SHA256SUMS').write_text(''.join(f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.name}\n' for p in payload), encoding='utf-8', newline='\n')
-output = ROOT/'dist/1.0.168/router-docker-1.0.168-v1.1.3.tar.gz'
+output = ROOT/'dist/1.0.168/router-docker-1.0.168-v1.1.5.tar.gz'
 output.parent.mkdir(parents=True, exist_ok=True)
 with tarfile.open(output, 'w:gz') as tar:
     files = [HERE/'install-router-docker.sh', HERE/'README.md', HERE/'SOURCES.md', *payload, HERE/'payload/SHA256SUMS']

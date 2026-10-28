@@ -1,12 +1,12 @@
 # 组件来源与固定摘要
 
-核对日期：2026-10-27。本工具独立实现部署、cgroup 补齐、procd 托管、API 就绪观察器和 LuCI API。独立代理入口复用本仓库 1.0.140 的托管/非托管运行方式，托管后端增加进程身份检查、配置回退和容器清单恢复。页面、CSS 和安装示意图来自用户提供的原厂开发版 ROM；页头基于用户提供的原厂稳定版 ROM，仅增加 Docker 导航。保留原厂样式，修改 API 路径、磁盘说明、第三方管理提示和停用语义。
+核对日期：2026-10-28。本工具独立实现部署、cgroup 补齐、procd 托管、API 就绪观察器和 LuCI API。独立代理入口复用本仓库 1.0.140 的托管/非托管运行方式，托管后端增加进程身份检查、配置回退和容器清单恢复。页面、CSS 和安装示意图来自用户提供的原厂开发版 ROM；页头基于用户提供的原厂稳定版 ROM，仅增加 Docker 导航。保留原厂样式，修改 API 路径、磁盘说明、第三方管理提示和停用语义。
 
 | 组件 | 来源 |
 | --- | --- |
 | Docker 页面/CSS/示意图 | `miwifi_ra70_all_develop_1.0.140.bin` |
 | 稳定版页头 | `miwifi_ra70_firmware_cc424_1.0.168.bin`，原文件 MD5 `9678b0beb974771986b1d6df3ef7dbc8` |
-| Docker 导航图标 | 1.0.140 的 `ico_nav_13.png`，SHA-256 `e8326e9c132adc26aa8e0c8cdf45102e25519a7565ebf3840db765d543c360fe`；内嵌在页头样式中 |
+| Docker 导航图标 | 1.0.140 的 `ico_nav_13.png`，SHA-256 `e8326e9c132adc26aa8e0c8cdf45102e25519a7565ebf3840db765d543c360fe`；参考原图重新描摹为内嵌 SVG，圆形与阴影由 CSS 绘制，保留原厂配色和容器船线条风格 |
 | Docker ARM64 程序 | [小米 CDN 固定地址](https://cdn.cnbj1.fds.api.mi-img.com/opensource/AX9000-stable-firmware/docker/docker-19.03.15-ce.tgz) |
 
 Docker 包 SHA-256：`030359d3cc1aac326409c6c37cc2ef5c1b9e5f1ddf97d722f5b8ab2cfa711d13`。本地下载后，八个程序的 MD5 均与开发版 `/etc/init.d/mi_docker` 内的常量一致。安装同时校验压缩包 SHA-256 和解包程序摘要。每个部署文件的 SHA-256 位于 `payload/SHA256SUMS`。

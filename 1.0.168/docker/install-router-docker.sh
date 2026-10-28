@@ -1,5 +1,5 @@
 #!/bin/sh
-# AX9000 RA70 stock 1.0.168 Docker + stock LuCI view, version 1.1.3.
+# AX9000 RA70 stock 1.0.168 Docker + stock LuCI view, version 1.1.5.
 set -eu
 HERE=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 [ -f "$HERE/payload/common.sh" ] || { echo '请保留完整安装目录（包含 payload）。' >&2; exit 1; }
@@ -33,12 +33,16 @@ OLD_MANIFEST_SHA=0d3a43154695fcc1fab8b3bbc4b29a3b684f2ce0f486bf4a374d63cb8ef84fa
 OLD_110_MANIFEST_SHA=0bd4768da258e05d77816194b47b39ce9e79ff4c69e7b56797f6d7ea9953f3ce
 OLD_111_MANIFEST_SHA=f0a1ad053015ddeb4248a8bc24520024ce463186cc6ea02ac9c9d56c1ad8c8b7
 OLD_112_MANIFEST_SHA=683b716ee9937f68be02ea7e12811e3cb6047d4b10b9c4f3abf0f42cee2d9773
+OLD_113_MANIFEST_SHA=3501290a174917bf01f08398b805b95cd1b0dcc480817175a2baec76a7f2d7f0
+OLD_114_MANIFEST_SHA=afe093ddddb4cf6885d7906ae337fc35ba25a73dc4ef27ac5f1dfbda5a333056
 known_previous_runtime() {
     case "$1" in
         1.0.0) [ "$(sha "$BASE/runtime/SHA256SUMS")" = "$OLD_MANIFEST_SHA" ] ;;
         1.1.0) [ "$(sha "$BASE/runtime/SHA256SUMS")" = "$OLD_110_MANIFEST_SHA" ] ;;
         1.1.1) [ "$(sha "$BASE/runtime/SHA256SUMS")" = "$OLD_111_MANIFEST_SHA" ] ;;
         1.1.2) [ "$(sha "$BASE/runtime/SHA256SUMS")" = "$OLD_112_MANIFEST_SHA" ] ;;
+        1.1.3) [ "$(sha "$BASE/runtime/SHA256SUMS")" = "$OLD_113_MANIFEST_SHA" ] ;;
+        1.1.4) [ "$(sha "$BASE/runtime/SHA256SUMS")" = "$OLD_114_MANIFEST_SHA" ] ;;
         *) return 1 ;;
     esac
 }
@@ -152,12 +156,12 @@ if [ "$ACTION" = upgrade ]; then
     api_timeout >/dev/null
     load_proxy
     previous_version=$(cat "$BASE/installed")
-    if [ "$previous_version" = 1.1.3 ]; then
-        cmp -s "$BASE/runtime/SHA256SUMS" "$HERE/payload/SHA256SUMS" || die '当前 1.1.3 与此包不一致，拒绝覆盖。'
-        echo '已经是 1.1.3，无需升级。'
+    if [ "$previous_version" = 1.1.5 ]; then
+        cmp -s "$BASE/runtime/SHA256SUMS" "$HERE/payload/SHA256SUMS" || die '当前 1.1.5 与此包不一致，拒绝覆盖。'
+        echo '已经是 1.1.5，无需升级。'
         exit 0
     fi
-    known_previous_runtime "$previous_version" || die '仅支持已核对的 1.0.0、1.1.0、1.1.1 或 1.1.2 升级到 1.1.3。'
+    known_previous_runtime "$previous_version" || die '仅支持已核对的 1.0.0、1.1.0、1.1.1、1.1.2、1.1.3 或 1.1.4 升级到 1.1.5。'
     [ "$(df -Pk / | awk 'END {print $4}')" -ge 2048 ] || die '系统可写层至少需要 2 MiB 可用空间。'
     UPGRADE_BACKUP=$(mktemp -d "$BASE/upgrade-$previous_version.XXXXXX")
     mkdir "$UPGRADE_BACKUP/files"
@@ -180,12 +184,12 @@ if [ "$ACTION" = upgrade ]; then
     targets | while read -r source target mode; do sha256sum "$target"; done > "$TMP"
     mv -f "$TMP" "$BASE/owned.sha256"
     TMP=$(mktemp "$BASE/.installed.XXXXXX")
-    echo 1.1.3 > "$TMP"
+    echo 1.1.5 > "$TMP"
     mv -f "$TMP" "$BASE/installed"
     TMP=
     PENDING=0
     clear_cache
-    echo "已升级到 1.1.3，配置、容器数据及原厂备份保留；升级前文件在 $UPGRADE_BACKUP。"
+    echo "已升级到 1.1.5，配置、容器数据及原厂备份保留；升级前文件在 $UPGRADE_BACKUP。"
     echo '页面修复刷新后生效，未主动重启 Docker；启动流程的变更在下次启动时生效。'
     exit 0
 fi
@@ -212,7 +216,7 @@ DATA=$DISK/mi_docker/lib/docker
 check_tree
 if [ -f "$BASE/installed" ]; then
     check_owned
-    [ "$(cat "$BASE/installed")" = 1.1.3 ] || die '已安装旧版本，请先执行 upgrade 保留配置升级。'
+    [ "$(cat "$BASE/installed")" = 1.1.5 ] || die '已安装旧版本，请先执行 upgrade 保留配置升级。'
     cmp -s "$BASE/runtime/SHA256SUMS" "$HERE/payload/SHA256SUMS" || die '安装包与当前运行文件版本不一致。'
     [ "$(get disk_uuid)" = "$UUID" ] || die '已安装到其他 UUID，拒绝更换磁盘。'
     check_engine || die '已有 Docker 程序不匹配，未覆盖文件。'
@@ -281,7 +285,7 @@ else
     TMP=
     /etc/init.d/mi_docker enable
     targets | while read -r source target mode; do sha256sum "$target"; done > "$BASE/owned.sha256"
-    echo 1.1.3 > "$BASE/installed"
+    echo 1.1.5 > "$BASE/installed"
     PENDING=0
     clear_cache
     echo '已恢复高级设置 → DOCKER，默认尚未启动 Docker。'

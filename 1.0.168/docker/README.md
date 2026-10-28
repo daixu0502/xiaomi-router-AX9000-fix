@@ -2,7 +2,7 @@
 
 适用于 **AX9000 / RA70 国行原厂稳定版 1.0.168**，在刷入原版固件并恢复 root SSH 后执行。通过可写文件系统补齐服务、管理 API 和“高级设置 → DOCKER”，不用制作或刷入修改版 ROM。
 
-当前工具版本 **1.1.3**：修复“高级设置”六项导航换行和 Docker 图标缺失，所有高级设置页面均使用同一行导航；内嵌原厂 1.0.140 Docker 图标，不依赖 1.0.168 缺失的图片。保留 cgroup 兼容修复、磁盘绑定挂载、开机 Docker API 就绪检查和托管代理入口；代理通过[独立脚本](../docker-proxy/README.md)配置，默认关闭。
+当前工具版本 **1.1.5**：使用内嵌 SVG 绘制 Docker 线条、CSS 绘制 64px 圆形及底部阴影，避免低分辨率 PNG 缩放和整图滤镜造成的边缘发虚。保留 70px 图标占位、文字间距和同一行的六项导航，不依赖外部图片或字体。保留 cgroup 兼容修复、磁盘绑定挂载、开机 Docker API 就绪检查和托管代理入口；代理通过[独立脚本](../docker-proxy/README.md)配置，默认关闭。
 
 每次启动按 UUID 找到 ext4 分区后，将完整分区绑定挂载到 `/mnt/docker_disk`，供使用原厂固定路径的工具访问。当前为 `/extdisks/sda1` 时，相当于 `mount -o bind /extdisks/sda1 /mnt/docker_disk`；设备名变化仍跟随同一 UUID。目标存在文件、符号链接、其他磁盘或子目录挂载时拒绝覆盖。两个路径访问同一份数据，不复制数据，也不改写原厂热插拔脚本。卸载外接盘前应先停止 Docker，再卸载 `/mnt/docker_disk` 兼容挂载。
 
@@ -14,12 +14,12 @@
 
 1. 刷入原版 1.0.168，恢复 root SSH。SSH 工具的前提见[统一说明](../../ssh/README.md)。脚本本身不能恢复 SSH。
 2. 连接已格式化为 ext4 的 USB 盘，用 `cat /proc/mounts` 确定实际挂载点，例如 `/extdisks/sda1`。必须为可读写、允许执行的真实挂载点；也支持已有 `/mnt/docker_disk`。脚本不分区、不格式化、不挑选第一块盘，后续按 UUID 查找同一分区。新装至少需 256 MiB 可用空间，镜像/容器另需空间。
-3. 将 [1.0.168 离线安装包](../../dist/1.0.168/router-docker-1.0.168-v1.1.3.tar.gz) 和 [SHA-256 校验文件](../../dist/1.0.168/router-docker-1.0.168-v1.1.3.tar.gz.sha256) 上传到 USB 盘，校验后解包；包内含已核对的原厂 Docker 下载包，不占用路由器内置存储保存大包。
+3. 将 [1.0.168 离线安装包](../../dist/1.0.168/router-docker-1.0.168-v1.1.5.tar.gz) 和 [SHA-256 校验文件](../../dist/1.0.168/router-docker-1.0.168-v1.1.5.tar.gz.sha256) 上传到 USB 盘，校验后解包；包内含已核对的原厂 Docker 下载包，不占用路由器内置存储保存大包。
 
 ```sh
 cd /extdisks/sda1
-sha256sum -c router-docker-1.0.168-v1.1.3.tar.gz.sha256
-tar -xzf router-docker-1.0.168-v1.1.3.tar.gz
+sha256sum -c router-docker-1.0.168-v1.1.5.tar.gz.sha256
+tar -xzf router-docker-1.0.168-v1.1.5.tar.gz
 cd router-docker-1.0.168
 
 # 核对状态，不安装
@@ -38,13 +38,13 @@ sh install-router-docker.sh apply --disk /extdisks/sda1 --start
 
 ## 从旧版工具升级
 
-上传并解包 1.1.3 完整离线包，在新目录运行：
+上传并解包 1.1.5 完整离线包，在新目录运行：
 
 ```sh
 sh install-router-docker.sh upgrade
 ```
 
-只接受已核对的 1.0.0、1.1.0、1.1.1 或 1.1.2 运行文件，保留 Docker 开关、磁盘 UUID、Portainer 配置、原厂备份及所有容器数据。升级前运行文件留在 `/data/router-docker-1.0.168/upgrade-旧版本.*/`，升级失败尝试回退。升级不主动重启正在运行的 Docker；页面布局及图标修复刷新后生效。cgroup 兼容修复和磁盘绑定挂载在下次启动生效，如从不含这些功能的旧版升级并需立即启用，明确执行 `stop` 再执行 `start`，容器会短暂中断。
+只接受已核对的 1.0.0、1.1.0、1.1.1、1.1.2、1.1.3 或 1.1.4 运行文件，保留 Docker 开关、磁盘 UUID、Portainer 配置、原厂备份及所有容器数据。升级前运行文件留在 `/data/router-docker-1.0.168/upgrade-旧版本.*/`，升级失败尝试回退。升级不主动重启正在运行的 Docker；页面布局及图标修复刷新后生效。cgroup 兼容修复和磁盘绑定挂载在下次启动生效，如从不含这些功能的旧版升级并需立即启用，明确执行 `stop` 再执行 `start`，容器会短暂中断。
 
 ## 开机 API 就绪检查
 

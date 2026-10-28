@@ -15,7 +15,7 @@ if [ -z "${CURL_CA_BUNDLE:-}" ] && [ -z "${SSL_CERT_FILE:-}" ] &&
 fi
 if [ -e "$CORE/installed" ]; then
     [ ! -L "$CORE" ] && [ ! -L "$CORE/runtime" ] || fail_early '托管目录不能为符号链接。'
-    case "$(cat "$CORE/installed")" in 1.1.0|1.1.1|1.1.2|1.1.3) ;; *) fail_early '请先将 Docker 自启修复升级到 1.1.3。' ;; esac
+    case "$(cat "$CORE/installed")" in 1.1.0|1.1.1|1.1.2|1.1.3|1.1.4|1.1.5) ;; *) fail_early '请先将 Docker 自启修复升级到 1.1.5。' ;; esac
     [ -f "$CORE/runtime/proxy.sh" ] || fail_early '托管代理入口缺失，请核对 Docker 核心。'
     (cd "$CORE/runtime" && sha256sum -c SHA256SUMS >/dev/null) || fail_early '托管运行文件已改变。'
     (cd / && sha256sum -c "$CORE/owned.sha256" >/dev/null) || fail_early '托管服务或页面已改变。'
