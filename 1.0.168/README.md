@@ -8,5 +8,5 @@
 | Docker 镜像代理 | [说明](docker-proxy/README.md) | [脚本](../dist/1.0.168/docker-mihomo-proxy-1.0.168-v1.0.3.sh) |
 | WAN MAC 页面修复 | [说明](web-wan-mac/README.md) | [脚本](web-wan-mac/fix-router-web-mac.sh) |
 | DHCP `/16` 修复 | [说明](web-dhcp/README.md) | [脚本](web-dhcp/fix-router-dhcp16-web.sh) |
-| 网页手动测速入口 | [说明](web-speedtest/README.md) | [脚本](web-speedtest/enable-router-speedtest.sh) |
+| 网页测速与采样修复 | [说明](web-speedtest/README.md) | [网页入口](web-speedtest/enable-router-speedtest.sh) · [采样与 502 修复](web-speedtest/fix-router-speedtest-sampling.sh) |
 | SSH 综合工具 | [说明](../ssh/README.md) | [完整包](../dist/common/router-ssh-v2.0.0.tar.gz) |

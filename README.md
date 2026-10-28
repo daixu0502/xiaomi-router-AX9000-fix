@@ -14,5 +14,5 @@
 | 1.0.168 | Docker 镜像代理 | [说明](1.0.168/docker-proxy/README.md) | [脚本](dist/1.0.168/docker-mihomo-proxy-1.0.168-v1.0.3.sh) | [SHA-256](dist/1.0.168/docker-mihomo-proxy-1.0.168-v1.0.3.sh.sha256) |
 | 1.0.168 | WAN MAC 页面修复 | [说明](1.0.168/web-wan-mac/README.md) | [脚本](1.0.168/web-wan-mac/fix-router-web-mac.sh) | — |
 | 1.0.168 | DHCP `/16` 修复 | [说明](1.0.168/web-dhcp/README.md) | [脚本](1.0.168/web-dhcp/fix-router-dhcp16-web.sh) | — |
-| 1.0.168 | 网页手动测速入口 | [说明](1.0.168/web-speedtest/README.md) | [脚本](1.0.168/web-speedtest/enable-router-speedtest.sh) | — |
+| 1.0.168 | 网页测速与采样修复 | [说明](1.0.168/web-speedtest/README.md) | [网页入口](1.0.168/web-speedtest/enable-router-speedtest.sh) · [采样与 502 修复](1.0.168/web-speedtest/fix-router-speedtest-sampling.sh) | — |
 | 两版共用 | SSH 综合工具 | [说明](ssh/README.md) | [完整包](dist/common/router-ssh-v2.0.0.tar.gz) · [源码](ssh/) | [SHA-256](dist/common/router-ssh-v2.0.0.tar.gz.sha256) |

@@ -14,8 +14,9 @@ QOS_STOCK=17a1ea8f785d2b0ed08843afc2b02602
 QOS_FIXED=b6ae09f98bd8d134148db8a95cbd5011
 QOS_PREVIOUS=35125f038b9dacdf2b3ea970c572f9cc
 SHARED_STOCK=a90c46c1d0643fbb76c47d02a2454e7b
-SHARED_FIXED=0436a2a32cd12ebafe93ebedefe142d5
-SHARED_PREVIOUS=d51298f4c028c2a8e4f76932b25f391f
+SHARED_FIXED=74b18f689af22889be97e362e7c5f216
+SHARED_PREVIOUS=0436a2a32cd12ebafe93ebedefe142d5
+SHARED_LEGACY=d51298f4c028c2a8e4f76932b25f391f
 UPGRADE=0
 WORK=
 NEW_INDEX=
@@ -33,6 +34,7 @@ state() {
         "$2") say original ;;
         "$3") say enabled ;;
         "${4:-no_previous}") say previous ;;
+        "${5:-no_legacy}") say previous ;;
         *) say unknown ;;
     esac
 }
@@ -47,7 +49,7 @@ cleanup() {
                 qos) target=$QOS; staged=$NEW_QOS; stock=$QOS_STOCK; fixed=$QOS_FIXED; previous=$QOS_PREVIOUS ;;
                 shared) target=$SHARED; staged=$NEW_SHARED; stock=$SHARED_STOCK; fixed=$SHARED_FIXED; previous=$SHARED_PREVIOUS ;;
             esac
-            if regular "$target" && [ "$(state "$target" "$stock" "$fixed" "$previous")" != unknown ]; then
+            if regular "$target" && [ "$(state "$target" "$stock" "$fixed" "$previous" "$SHARED_LEGACY")" != unknown ]; then
                 if cp -p "$WORK/$entry.before" "$staged" && mv -f "$staged" "$target"; then
                     say "已回退：$target" >&2
                 else
@@ -94,7 +96,7 @@ for target in "$INDEX" "$QOS" "$SHARED"; do
 done
 INDEX_STATE=$(state "$INDEX" "$INDEX_STOCK" "$INDEX_FIXED")
 QOS_STATE=$(state "$QOS" "$QOS_STOCK" "$QOS_FIXED" "$QOS_PREVIOUS")
-SHARED_STATE=$(state "$SHARED" "$SHARED_STOCK" "$SHARED_FIXED" "$SHARED_PREVIOUS")
+SHARED_STATE=$(state "$SHARED" "$SHARED_STOCK" "$SHARED_FIXED" "$SHARED_PREVIOUS" "$SHARED_LEGACY")
 [ "$INDEX_STATE" != unknown ] && [ "$QOS_STATE" != unknown ] && [ "$SHARED_STATE" != unknown ] || die '页面或共享脚本存在未知修改，拒绝覆盖。'
 if [ "$ACTION" = status ]; then
     say "状态页：$INDEX_STATE；QoS 页：$QOS_STATE；共享脚本：$SHARED_STATE"
@@ -107,7 +109,7 @@ if [ "$ACTION" = apply ]; then
     fi
     case "$INDEX_STATE/$QOS_STATE/$SHARED_STATE" in
         original/original/original) ;;
-        enabled/previous/previous) UPGRADE=1 ;;
+        enabled/previous/previous|enabled/enabled/previous) UPGRADE=1 ;;
         *) die '页面或共享脚本状态不一致，请先用原备份 restore 恢复。' ;;
     esac
 fi
@@ -201,28 +203,59 @@ local helper=[=[    var renderQosSpeed = function(downband, upband){
     };
 ]=]
 shared=replace(shared,'    var getDownloadSpeed = function(){',helper..'    var getDownloadSpeed = function(){')
-local first=assert(shared:find('    var speedTest = function(){',1,true))
+local first=assert(shared:find('    var getDownloadSpeed = function(){',1,true))
 local last=assert(shared:find("    $.sub( 'speed:test',",first,true))
-shared=shared:sub(1,first-1)..[=[    var speedTest = function(){
+shared=shared:sub(1,first-1)..[=[    var runningTest = null;
+    var requestSpeedApi = function(route, data, stage){
         var dtd = $.Deferred();
-        getDownloadSpeed().done(function(rsp){
-            var download = Number(rsp.bandwidth), upload = Number(rsp.bandwidth2);
-            if (!isFinite(download) || !isFinite(upload) || download <= 0 || upload < 0) {
-                dtd.reject();
-                return;
+        $.ajax({
+            url: route, type: 'POST', data: data, dataType: 'json', timeout: 90000,
+            success: function(rsp){
+                if (rsp && rsp.code == 0) { dtd.resolve(rsp); }
+                else { dtd.reject({stage:stage, code:rsp && rsp.code, msg:rsp && rsp.msg}); }
+            },
+            error: function(xhr, status){
+                dtd.reject({stage:stage, http:xhr && xhr.status, status:status});
             }
-            setQosband(upload, download).done(function(){
-                dtd.resolve(download, upload, rsp.download, rsp.upload);
-            }).fail(function(){
-                dtd.reject();
-            });
-        }).fail(function(){
-            dtd.reject();
         });
         return dtd.promise();
     };
+    var speedErrorText = function(error){
+        error = error || {};
+        var stage = error.stage == 'save' ? '测速已完成，但保存限速失败' : '测速失败';
+        if (error.http) { return stage + '（HTTP ' + error.http + '，后端未正常响应），请稍候重试。'; }
+        if (error.status == 'timeout') { return stage + '（请求超时），请等待后台测速结束后再试。'; }
+        if (error.msg) { return stage + '：' + error.msg + (error.code ? '（' + error.code + '）' : ''); }
+        return stage + '（未取得有效带宽结果），未写入新的限速值。';
+    };
+    var speedTest = function(){
+        if (runningTest) { return runningTest; }
+        var dtd = $.Deferred();
+        runningTest = dtd.promise();
+        var result = runningTest;
+        dtd.always(function(){ runningTest = null; });
+        requestSpeedApi('<%=luci.dispatcher.build_url("api","misystem","bandwidth_test")%>', {new:1}, 'measure').done(function(rsp){
+            var download = Number(rsp.bandwidth), upload = Number(rsp.bandwidth2);
+            if (!isFinite(download) || !isFinite(upload) || download <= 0 || upload <= 0) {
+                dtd.reject({stage:'measure', code:1588, msg:'上传或下载未取得有效结果，请重新测试'});
+                return;
+            }
+            requestSpeedApi('<%=luci.dispatcher.build_url("api","misystem","set_band")%>', {upload:upload, download:download, manual:1}, 'save').done(function(){
+                dtd.resolve(download, upload, rsp.download, rsp.upload);
+            }).fail(function(error){
+                dtd.reject(error);
+            });
+        }).fail(function(error){
+            dtd.reject(error);
+        });
+        return result;
+    };
 
 ]=]..shared:sub(last)
+shared=shared:gsub('var showErr = function%(%)%{', 'var showErr = function(error){')
+shared=replace(shared,"            dlg.content( $( '#tmplSpeedTestErr' ).html() );", "            var view = $('<div>').html($('#tmplSpeedTestErr').html());\n            view.find('p').first().text(speedErrorText(error));\n            dlg.content(view.html());")
+shared=replace(shared,"            dlg.content( $( '#tmplBandTestErr' ).html() );", "            var view = $('<div>').html($('#tmplBandTestErr').html());\n            view.find('p').first().text(speedErrorText(error));\n            dlg.content(view.html());")
+shared=shared:gsub('%.fail%(function%(%)%{\n%s+showErr%(%)%s*;', '.fail(function(error){\n                showErr(error);')
 local oldResult=[=[            var result2 = tpl2.tmpl( {
                 downband: downband,
                 upband: upband
